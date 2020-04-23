@@ -1,0 +1,1 @@
+C:\app\1\product\11.2.0\client_1\bin;C:\app\product\11.2.0\client_1\BIN;c:\ora_x64\product\11.2.0\client_1\bin;

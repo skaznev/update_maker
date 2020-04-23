@@ -1,0 +1,12 @@
+select count(1)
+                                     from V_TR_DEAL_CAT_SEC DEAL
+                                     join V_TR_DICT_SEC_AGR AGR on AGR.id = DEAL.agreement_id
+                                    where AGR.agr_type_id in ( 1263  -- TR_GET.AGREEMENT_BROKER
+                                                             , 2027  -- TR_GET.AGREEMENT_HANDL
+                                                             )
+                                      and AGR.tf_master_pfl_id     is null
+                                      and DEAL.back_office_id      = 52
+                                      and DEAL.sub_type            is null
+                                      and DEAL.trade_date         >= trunc(sysdate) - 2
+                                      and not DEAL.status_type_id  = 219  -- TR_GET.STATUS_CLOSE
+                                      and DEAL.exch_id             = 176511

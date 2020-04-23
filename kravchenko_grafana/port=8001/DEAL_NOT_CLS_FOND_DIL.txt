@@ -1,0 +1,7 @@
+select count(1)
+                                     from V_TR_DEAL_CAT_SEC DEAL
+                                    where     DEAL.back_office_id  = 52
+                                      and     DEAL.sub_type       is null
+                                      and     DEAL.trade_date     >= trunc(sysdate) - 2
+                                      and not DEAL.status_type_id  = 219  -- TR_GET.STATUS_CLOSE
+                                      and     agr_id4not_nostro    = 0

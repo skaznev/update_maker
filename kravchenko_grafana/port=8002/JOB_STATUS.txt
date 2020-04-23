@@ -1,0 +1,8 @@
+select T.job_name                                    job_name
+                               , decode( V.job , null, 0, decode ( V.broken, 'Y', -1 , 1)) status
+                            from V_TR_SYS_DBA_JOBS   V
+                               , V_TR_TYPE_JOB       T
+                           where T.proc_name     = V.what(+)
+                             and (        T.thread_id is null
+                                   or not V.job       is null
+                                 )

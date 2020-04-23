@@ -1,0 +1,4 @@
+sleep=15
+type=collector
+labels=job_name
+select=status

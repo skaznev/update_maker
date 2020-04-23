@@ -1,0 +1,12 @@
+select count(1)
+                                    from V_TR_DEAL_CAT_SEC DCS
+                                       , V_TR_DICT_SEC_AGR AGR
+                                       , V_TR_DICT_SEC DS
+                                   where DCS.AGR_ID4NOT_NOSTRO != 0
+                                     AND DCS.AGREEMENT_ID = AGR.ID
+                                     AND DCS.SEC_ID = DS.ID
+                                     AND DCS.TRADE_DATE_TIME >= trunc(sysdate)
+                                     AND DCS.TRADE_DATE_TIME < trunc(sysdate + 1)
+                                     AND NOT EXISTS (  SELECT 1 FROM V_TR_PAY_CAT P
+                                                        WHERE P.TICKET_ID = DCS.TICKET_ID
+                                                    )

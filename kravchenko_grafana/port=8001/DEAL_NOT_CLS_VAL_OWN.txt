@@ -1,0 +1,8 @@
+select count ( 1 )
+                                             from V_TR_DEAL_CAT_EXCH   DEAL
+                                             join V_TR_DICT_SEC_AGR    AGR  on AGR.id = DEAL.agr_id
+                                            where DEAL.status_type_id  != 219 --TR_GET.STATUS_CLOSE
+                                              and DEAL.trade_date_time >  SYSDATE -1 
+                                              and AGR.agreement_type   in ( 1263  -- TR_GET.AGREEMENT_BROKER
+                                                                          , 2027  -- TR_GET.AGREEMENT_HANDL
+                                                                          )

@@ -1,0 +1,98 @@
+# -*- coding: utf-8 -*-
+
+# Form implementation generated from reading ui file 'c:\projects\update_maker\download_deal\design.ui'
+#
+# Created by: PyQt5 UI code generator 5.13.2
+#
+# WARNING! All changes made in this file will be lost!
+
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(780, 69)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
+        MainWindow.setSizePolicy(sizePolicy)
+        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+        self.label_1 = QtWidgets.QLabel(self.centralwidget)
+        self.label_1.setGeometry(QtCore.QRect(410, 10, 71, 16))
+        self.label_1.setObjectName("label_1")
+        self.button_start = QtWidgets.QPushButton(self.centralwidget)
+        self.button_start.setGeometry(QtCore.QRect(610, 40, 161, 21))
+        self.button_start.setObjectName("button_start")
+        self.line_base = QtWidgets.QLineEdit(self.centralwidget)
+        self.line_base.setGeometry(QtCore.QRect(90, 40, 111, 20))
+        self.line_base.setObjectName("line_base")
+        self.line_user = QtWidgets.QLineEdit(self.centralwidget)
+        self.line_user.setGeometry(QtCore.QRect(290, 40, 111, 20))
+        self.line_user.setObjectName("line_user")
+        self.line_pass = QtWidgets.QLineEdit(self.centralwidget)
+        self.line_pass.setGeometry(QtCore.QRect(490, 40, 111, 20))
+        self.line_pass.setText("")
+        self.line_pass.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.line_pass.setObjectName("line_pass")
+        self.label_4 = QtWidgets.QLabel(self.centralwidget)
+        self.label_4.setGeometry(QtCore.QRect(10, 40, 61, 16))
+        self.label_4.setObjectName("label_4")
+        self.combo_why = QtWidgets.QComboBox(self.centralwidget)
+        self.combo_why.setGeometry(QtCore.QRect(90, 10, 111, 22))
+        self.combo_why.setObjectName("combo_why")
+        self.combo_why.addItem("")
+        self.combo_why.addItem("")
+        self.combo_why.addItem("")
+        self.label_2 = QtWidgets.QLabel(self.centralwidget)
+        self.label_2.setGeometry(QtCore.QRect(10, 10, 71, 16))
+        self.label_2.setObjectName("label_2")
+        self.date_from = QtWidgets.QDateEdit(self.centralwidget)
+        self.date_from.setGeometry(QtCore.QRect(490, 10, 110, 22))
+        self.date_from.setObjectName("date_from")
+        self.label_5 = QtWidgets.QLabel(self.centralwidget)
+        self.label_5.setGeometry(QtCore.QRect(210, 40, 81, 16))
+        self.label_5.setObjectName("label_5")
+        self.label_6 = QtWidgets.QLabel(self.centralwidget)
+        self.label_6.setGeometry(QtCore.QRect(410, 40, 41, 16))
+        self.label_6.setObjectName("label_6")
+        self.label_3 = QtWidgets.QLabel(self.centralwidget)
+        self.label_3.setGeometry(QtCore.QRect(610, 10, 71, 16))
+        self.label_3.setObjectName("label_3")
+        self.date_to = QtWidgets.QDateEdit(self.centralwidget)
+        self.date_to.setGeometry(QtCore.QRect(690, 10, 81, 22))
+        self.date_to.setObjectName("date_to")
+        self.combo_type_date = QtWidgets.QComboBox(self.centralwidget)
+        self.combo_type_date.setGeometry(QtCore.QRect(290, 10, 111, 22))
+        self.combo_type_date.setObjectName("combo_type_date")
+        self.combo_type_date.addItem("")
+        self.combo_type_date.addItem("")
+        self.label_7 = QtWidgets.QLabel(self.centralwidget)
+        self.label_7.setGeometry(QtCore.QRect(210, 10, 71, 16))
+        self.label_7.setObjectName("label_7")
+        MainWindow.setCentralWidget(self.centralwidget)
+
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "Экспорт сделок"))
+        self.label_1.setText(_translate("MainWindow", "Дата начала:"))
+        self.button_start.setText(_translate("MainWindow", "Start"))
+        self.line_base.setText(_translate("MainWindow", "XXI"))
+        self.line_user.setText(_translate("MainWindow", "MELNIK"))
+        self.label_4.setText(_translate("MainWindow", "База:"))
+        self.combo_why.setItemText(0, _translate("MainWindow", "Всё"))
+        self.combo_why.setItemText(1, _translate("MainWindow", "ФР ММВБ"))
+        self.combo_why.setItemText(2, _translate("MainWindow", "ФР СПБ"))
+        self.label_2.setText(_translate("MainWindow", "Выгружать:"))
+        self.label_5.setText(_translate("MainWindow", "Пользователь:"))
+        self.label_6.setText(_translate("MainWindow", "Пароль:"))
+        self.label_3.setText(_translate("MainWindow", "Дата конца:"))
+        self.combo_type_date.setItemText(0, _translate("MainWindow", "Дата торгов"))
+        self.combo_type_date.setItemText(1, _translate("MainWindow", "Дата расчётов"))
+        self.label_7.setText(_translate("MainWindow", "Фильтр по:"))

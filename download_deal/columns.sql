@@ -1,1 +1,1 @@
-TradeDate|TradeNo|BuySell|Amount|AccInt|SettleDate
+TradeDate;TradeNo;BuySell;Amount;AccInt;SettleDate

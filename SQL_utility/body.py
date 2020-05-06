@@ -16,24 +16,10 @@ ps          = ''        # пароль
 threads_cnt = 5         # количетсво потоков
 date_to     = r''''''   # дата с которой селектим
 date_from   = r''''''   # дата по которую селектим
-buff_size   = 2000000   # размер буфера, который держим в памяти
+buff_size   = 2000000   # размер буфера, который держим в памяти (байт)
 delim       = '|'       # разделитель в файле
 
     #---------- КОНЕЦ: ОБЪЯВЛЯЕМ ПЕРЕМЕННЫЕ ----------
-
-    #---------- ЧИТАЕМ ФАЙЛЫ С КОНФИГОМ ----------
-
-# with open( 'columns.sql' ,'r') as file:
-#     columns = file.read()
-
-# with open( 'SELECT MOEX_STCKS.sql' ,'r') as file:
-#     sql_moex_stcks = file.read()
-
-# with open( 'SELECT SPBEX_STCKS.sql' ,'r') as file:
-#     sql_spbex_stcks = file.read()
-
-    #---------- КОНЕЦ: ЧИТАЕМ ФАЙЛЫ С КОНФИГОМ ----------
-
 
     #---------- БЛОК ВСПОМОГАТЕЛЬНЫХ ФУНКЦИЙ ----------
 
@@ -43,6 +29,15 @@ def utf8len(s):
     return len(s.encode('ANSI'))
 
     #---------- КОНЕЦ: ФУНКЦИЯ ПОДСЧЕТА ДЛИНЫ СТРОКИ ----------
+
+def execute_oracle (user, ps, db, sql, threads_cnt, mod):
+    print(datetime.datetime.now())
+
+    conn = ora.connect(user, ps, db)
+    cur = conn.cursor()
+    if threads_cnt == 1:
+        cur.execute(sql)
+
 
     #---------- ФУНКЦИЯ ДОПИСЫВАНИЯ В ФАЙЛ ----------
 
@@ -81,11 +76,11 @@ def create_file(user, ps, db, sql, size, date_from, date_to, threads_cnt, mod, p
 
     #---------- ФУНКЦИЯ РАСКИДЫВАЮЩАЯ ЗАДАЧУ ПО ПОТОКАМ ----------
 
-def start(user, ps, db, sql, buff_size, date_from, date_to, type_date, threads_cnt, path):
+def start_script(user, ps, db, sql, threads_cnt):
     threads = []
 
     for i in range(threads_cnt):
-        thread = Process(target=create_file, args=(user, ps, db, sql, buff_size, date_from, date_to, threads_cnt, i, path, ))
+        thread = Process(target=execute_oracle, args=(user, ps, db, sql, threads_cnt, i))
         threads.append(thread)
         thread.start()
 
@@ -98,60 +93,35 @@ def start(user, ps, db, sql, buff_size, date_from, date_to, type_date, threads_c
 
     #---------- ГЛАВНАЯ ФУНКЦИЯ!!!!!!!!!! ----------
 
-def execute(USER, PASSWORD, DB, DATE_FROM, DATE_TO, TYPE_DATE, WHAT, PATH):
+def execute(USER, PASSWORD, DB, WHAT, PATH, SQL, THREADS_CNT, DELIMITER, ):
 
     global buff_size
     global threads_cnt
     global columns
-    global sql_moex_stcks
-    global sql_spbex_stcks
+    global sql
     
     user        = USER
     ps          = PASSWORD
     db          = DB
-    date_from   = DATE_FROM
-    date_to     = DATE_TO
-    type_date   = TYPE_DATE
+    what        = WHAT
+    path        = PATH
+    threads_cnt = int(THREADS_CNT)
+    sql         = SQL
+    delimiter   = DELIMITER
+
+    print(USER, PASSWORD, DB, WHAT, PATH, THREADS_CNT, SQL, DELIMITER)
     
-    if type_date == 'Дата торгов':
-        sql_moex_stcks  = sql_moex_stcks.replace('$date$','DIL.trade_date_time')
-        sql_spbex_stcks = sql_spbex_stcks.replace('$date$','DIL.trade_date_time')
-    else:
-        sql_moex_stcks  = sql_moex_stcks.replace('$date$','DIL.clear_value_date_time')
-        sql_spbex_stcks = sql_spbex_stcks.replace('$date$','DIL.clear_value_date_time')
-    
-    if WHAT == 'ФР ММВБ':
-        path = os.path.join(PATH, date_from.replace('.', '-') +' TradeSec MOEX1')
-        
-        with open(path + r'''.csv''' ,'w') as File_prev:
-            File_prev.write(columns)
-        
-        File = open(path + r'''.csv''' ,'a')
-        
-        start(user, ps, db, sql_moex_stcks, buff_size, date_from, date_to, type_date, threads_cnt, path)
+    if what == 'Выполнить':
+        start_script(user, ps, db, sql, threads_cnt)
 
-    elif WHAT == 'ФР СПБ':
-        path = os.path.join(PATH, date_from.replace('.', '-') +' TradeSec SPB1')
+    # elif WHAT == 'Выгрузить':
+    #     path = os.path.join(PATH, date_from.replace('.', '-') +' TradeSec SPB1')
         
-        with open(path + r'''.csv''' ,'w') as File_prev:
-            File_prev.write(columns)
-        File = open( path + r'''.csv''' ,'a')
+    #     with open(path + r'''.csv''' ,'w') as File_prev:
+    #         File_prev.write(columns)
+    #     File = open( path + r'''.csv''' ,'a')
         
-        start(sql_spbex_stcks, buff_size, date_from, date_to, type_date, threads_cnt, path)
+    #     start(sql_spbex_stcks, buff_size, date_from, date_to, type_date, threads_cnt, path)
 
-    elif WHAT == 'Всё':
-        path_moex   = os.path.join(PATH, date_from.replace('.', '-') +' TradeSec MOEX1')
-        path_spbex  = os.path.join(PATH, date_from.replace('.', '-') +' TradeSec SPB1')
-        
-        with open(path_moex + r'''.csv''' ,'w') as File_prev:
-            File_prev.write(columns)
-        with open(path_spbex + r'''.csv''' ,'w') as File_prev:
-            File_prev.write(columns)
-        
-        File = open(path_moex + r'''.csv''' ,'a')
-        File = open(path_spbex + r'''.csv''' ,'a')
-
-        start(user, ps, db, sql_moex_stcks, buff_size, date_from, date_to, type_date, threads_cnt, path_moex)
-        start(user, ps, db, sql_spbex_stcks, buff_size, date_from , date_to, type_date, threads_cnt, path_spbex)
 
     #---------- КОНЕЦ: ГЛАВНАЯ ФУНКЦИЯ!!!!!!!!!! ----------

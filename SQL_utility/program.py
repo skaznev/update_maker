@@ -14,11 +14,20 @@ import os                           # Выставляю через него п�
     
     #---------- ОБЪЯВЛЯЕМ ПЕРЕМЕННЫЕ ----------
 
-path_select = os.path.join(os.getcwd(), 'selects')  # Директория с селектами
-path_script = os.path.join(os.getcwd(), 'scripts')  # Директория со скриптами
-dict_sql    = dict()                                # Справочник SQL инструкций (скрипты и селекты). Структура записи: название файла, [тип(селект/скрипт), текст инструкции]
-type_select = 'Выгрузить'
-type_script = 'Выполнить'
+path_select     = os.path.join(os.getcwd(), 'QUERY')   # Директория с селектами
+path_script     = os.path.join(os.getcwd(), 'SCRIPT')  # Директория со скриптами
+dict_sql        = dict()                               # Справочник SQL инструкций (скрипты и селекты). Структура записи: название файла, [тип(селект/скрипт), текст инструкции]
+type_select     = 'Выгрузить'
+type_script     = 'Выполнить'
+i_param_delim   = r'|'
+i_param_basic   = r'$P'
+i_param_add     = r'$PARAM'
+i_param_date_1  = r'$D1'
+i_param_date_2  = r'$D2'
+i_delimiter     = r'-- $delimiter = '
+i_threads_cnt   = r'-- $threads = '
+i_sql_start     = 'begin execute immediate ( \' '
+i_sql_end       = ' \' ); end;'
 
 try:
     with open('set.txt', 'r') as file:
@@ -54,11 +63,12 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
        
         super().__init__()                                                  # Это здесь нужно для доступа к переменным, методам и т.д. в файле design.py
         self.setupUi(self)                                                  # Это нужно для инициализации нашего дизайна
-        self.date_from.setDate(QtCore.QDate.currentDate().addDays(-1))
+        self.date_from.setDate(QtCore.QDate.currentDate().addDays(-1))      # Ставим дату "вчера"
         self.date_to.setDate(QtCore.QDate.currentDate())
         self.date_from.dateChanged.connect(self.set_date)
         self.button_open.clicked.connect(self.browse_folder)                # Выполнить функцию browse_folder  при нажатии кнопки button_open        
         self.button_start.clicked.connect(self.start)
+        self.table_param_basic.setSortingEnabled(False)                     # Отключаем сортировку в таблице основных парамтеров
         self.combo_why.currentTextChanged.connect(self.refresh)
         self.combo_sql.currentTextChanged.connect(self.refresh_param)
         self.refresh()
@@ -79,10 +89,10 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
     #---------- ФУНКЦИЯ "Выбор файла для экспорта" ----------    
 
     def browse_folder(self):
-        directory = QtWidgets.QFileDialog.getExistingDirectory(self,'Выбор директории для экспорта') 
+        directory = QtWidgets.QFileDialog.getSaveFileName(self,'Выбор файла для экспорта', filter = 'CSV (*.csv)',initialFilter = 'CSV (*.csv)') 
         if directory:                                                       # не продолжать выполнение, если пользователь не выбрал директорию
             self.line_path.clear()                                          # На случай, если в списке уже есть элементы
-            self.line_path.setText(directory)        
+            self.line_path.setText(directory[0])        
 
     #---------- ФУНКЦИЯ "ПЕРЕЧИТАЙ ПОЛЯ" ----------   
 
@@ -108,7 +118,7 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
             self.add_basic_param(line_param)
 
     def add_basic_param(self, text):
-        list_param = text.split('|')
+        list_param = text.split(i_param_delim)
         self.table_param_basic.setRowCount(len(list_param))
         for i, param in enumerate(list_param):
             self.table_param_basic.setItem(i, 0, self.createItem(param, QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled))
@@ -120,11 +130,53 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
 
     #---------- КОНЕЦ: ФУНКЦИЯ "ПЕРЕЧИТАЙ ПОЛЯ С ПАРАМЕТРАМИ" ----------   
 
+    #---------- ФУНКЦИЯ "НАЙДИ ЗНАЧЕНИЕ ПАРАМЕТРА" ----------       
+    
+    def return_param(self, text, param):
+        for line in text.split('\n'):
+            if param in line:
+                return line[len(param):]
+        return ''
+
+    #---------- КОНЕЦ: ФУНКЦИЯ "НАЙДИ ЗНАЧЕНИЕ ПАРАМЕТРА" ----------   
+
+    #---------- ФУНКЦИЯ "ОБОГАТИ СКРИПТ ПАРАМЕТРАМИ" ----------   
+
+    def param_to_sql(self, sql):
+        for i in range(self.table_param_basic.rowCount()):
+            sql = sql.replace(i_param_basic + str(i+1), '\'' + self.table_param_basic.item(i, 1).text() + '\'')
+        
+        param_add = ''
+        param_addit = self.text_param_addit.toPlainText().split('\n')
+        if param_addit:
+            for i, line in enumerate(param_addit):
+                param_add += '\'' + line + '\'' + '\n'
+                if not i == len(param_addit) - 1:
+                    param_add += ','
+        sql = sql.replace(i_param_add, param_add)
+
+        sql = sql.replace(i_param_date_1, '\'' + str(self.date_from.date().toString("dd.MM.yyyy")) + '\'')
+        sql = sql.replace(i_param_date_2, '\'' + str(self.date_to.date().toString("dd.MM.yyyy")) + '\'')
+
+        #sql = i_sql_start + sql + i_sql_end
+        return sql
+
+    #---------- КОНЕЦ: ФУНКЦИЯ "ОБОГАТИ СКРИПТ ПАРАМЕТРАМИ" ----------   
+
     #---------- ФУНКЦИЯ ПОД КНОПКОЙ "СТАРТ" ----------    
     
     def start(self):
         try:
-            body.execute(USER = self.line_user.text(), PASSWORD = self.line_pass.text(), DB = self.line_base.text(), DATE_FROM = str(self.date_from.date().toString("yyyy.MM.dd")), DATE_TO = str(self.date_to.date().toString("yyyy.MM.dd")), TYPE_DATE = self.combo_type_date.currentText(), WHAT = self.combo_why.currentText(), PATH = os.path.join(os.getcwd(), 'export'))
+            sql = dict_sql[self.combo_sql.currentData()][1]           
+            body.execute(   USER        = self.line_user.text(),
+                            PASSWORD    = self.line_pass.text(),
+                            DB          = self.line_base.text(),
+                            WHAT        = self.combo_why.currentText(),
+                            PATH        = self.line_path.text(),
+                            SQL         = self.param_to_sql(sql = sql),
+                            DELIMITER   = self.return_param(text = sql, param = i_delimiter),
+                            THREADS_CNT = self.return_param(text = sql, param = i_threads_cnt)
+                        )
             QtWidgets.QMessageBox.information(self,'Информация', '''Завершено успешно!''' )
         except Exception as e:
             QtWidgets.QMessageBox.information(self,'ERROR!!!', '''Произошла критическая ошибка:\n''' + str(e))

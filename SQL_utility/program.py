@@ -8,6 +8,7 @@ import body                         # Собственно наш файл со 
 import cx_Oracle                    # Конкретно тут не нужен, но если его притягивать только в модуле (body), то выеживается pyinstaller
 import multiprocessing              # Нужно для торможения лишних окон из-за мультипроцессинга в модуле с логикой
 import os                           # Выставляю через него переменные окружения
+import datetime                     # Нужно для генерации ключа
 
     #---------- КОНЕЦ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК ----------
 
@@ -20,14 +21,15 @@ dict_sql        = dict()                               # Справочник SQ
 type_select     = 'Выгрузить'
 type_script     = 'Выполнить'
 i_param_delim   = r'|'
+i_param_log     = r'$P0'
 i_param_basic   = r'$P'
 i_param_add     = r'$PARAM'
 i_param_date_1  = r'$D1'
 i_param_date_2  = r'$D2'
 i_delimiter     = r'-- $delimiter = '
 i_threads_cnt   = r'-- $threads = '
-i_sql_start     = 'begin execute immediate ( \' '
-i_sql_end       = ' \' ); end;'
+i_columns       = r'-- $columns = '
+
 
 try:
     with open('set.txt', 'r') as file:
@@ -136,16 +138,17 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
         for line in text.split('\n'):
             if param in line:
                 return line[len(param):]
-        return ''
+        return '1'
 
     #---------- КОНЕЦ: ФУНКЦИЯ "НАЙДИ ЗНАЧЕНИЕ ПАРАМЕТРА" ----------   
 
     #---------- ФУНКЦИЯ "ОБОГАТИ СКРИПТ ПАРАМЕТРАМИ" ----------   
 
-    def param_to_sql(self, sql):
+    def param_to_sql(self, sql, code_run):
+        # Базовые параметры
         for i in range(self.table_param_basic.rowCount()):
             sql = sql.replace(i_param_basic + str(i+1), '\'' + self.table_param_basic.item(i, 1).text() + '\'')
-        
+        # Дополнительные параметры
         param_add = ''
         param_addit = self.text_param_addit.toPlainText().split('\n')
         if param_addit:
@@ -154,32 +157,65 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
                 if not i == len(param_addit) - 1:
                     param_add += ','
         sql = sql.replace(i_param_add, param_add)
-
+        # Даты левая правая
         sql = sql.replace(i_param_date_1, '\'' + str(self.date_from.date().toString("dd.MM.yyyy")) + '\'')
         sql = sql.replace(i_param_date_2, '\'' + str(self.date_to.date().toString("dd.MM.yyyy")) + '\'')
+        # Идентификатор лога
+        sql = sql.replace(i_param_log, '\'' + code_run + '\'')
 
-        #sql = i_sql_start + sql + i_sql_end
         return sql
 
     #---------- КОНЕЦ: ФУНКЦИЯ "ОБОГАТИ СКРИПТ ПАРАМЕТРАМИ" ----------   
 
+    #---------- ФУНКЦИЯ "ПРОВЕРЬ, ЕСТЬ ЛИ ОШИБКИ" ----------   
+
+    def errors(self):
+        # Чекнем креды
+        if (not self.line_user.text()) or (not self.line_pass.text()) or (not self.line_base.text()):
+            return True
+        # Чекнем базовые параметры
+        for i in range(self.table_param_basic.rowCount()):
+            if self.table_param_basic.item(i, 1) == None:
+                return True
+        # Чекнем директорию
+        if self.combo_why.currentText() == type_select:
+            if not self.line_path.text():
+                return True
+        # Чекнем дополнительные параметры
+        if i_param_add in dict_sql[self.combo_sql.currentData()][1]:
+            if not self.text_param_addit.toPlainText():
+                return True
+        return False
+
+    #---------- КОНЕЦ: ФУНКЦИЯ "ПРОВЕРЬ, ЕСТЬ ЛИ ОШИБКИ" ----------   
+
     #---------- ФУНКЦИЯ ПОД КНОПКОЙ "СТАРТ" ----------    
     
     def start(self):
-        try:
-            sql = dict_sql[self.combo_sql.currentData()][1]           
-            body.execute(   USER        = self.line_user.text(),
-                            PASSWORD    = self.line_pass.text(),
-                            DB          = self.line_base.text(),
-                            WHAT        = self.combo_why.currentText(),
-                            PATH        = self.line_path.text(),
-                            SQL         = self.param_to_sql(sql = sql),
-                            DELIMITER   = self.return_param(text = sql, param = i_delimiter),
-                            THREADS_CNT = self.return_param(text = sql, param = i_threads_cnt)
-                        )
-            QtWidgets.QMessageBox.information(self,'Информация', '''Завершено успешно!''' )
-        except Exception as e:
-            QtWidgets.QMessageBox.information(self,'ERROR!!!', '''Произошла критическая ошибка:\n''' + str(e))
+        if self.errors():
+            QtWidgets.QMessageBox.information(self,'ERROR!!!', '''Заполнены не все необходимые параметры! Выполнение невозможно.''')
+        else:
+            try:
+                # Замутим код запуска
+                code_run = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+                # Начитаем sql                 
+                sql = dict_sql[self.combo_sql.currentData()][1]     
+                # Погнали в базу    
+                logs = body.execute(USER        = self.line_user.text(),
+                                    PASSWORD    = self.line_pass.text(),
+                                    DB          = self.line_base.text(),
+                                    WHAT        = self.combo_why.currentText(),
+                                    PATH        = self.line_path.text(),
+                                    SQL_NAME    = self.combo_sql.currentText(),
+                                    SQL         = self.param_to_sql(sql = sql, code_run = code_run),
+                                    DELIMITER   = self.return_param(text = sql, param = i_delimiter),
+                                    THREADS_CNT = self.return_param(text = sql, param = i_threads_cnt),
+                                    COLUMNS     = self.return_param(text = sql, param = i_columns),
+                                    CODE_RUN    = code_run
+                                    )
+                QtWidgets.QMessageBox.information(self,'Информация', '''Завершено успешно!\n''' + logs)
+            except Exception as e:
+                QtWidgets.QMessageBox.information(self,'ERROR!!!', '''Произошла критическая ошибка:\n''' + str(e))
             
 
     #---------- КОНЕЦ: ФУНКЦИЯ ПОД КНОПКОЙ "СТАРТ" ----------    

@@ -19,7 +19,7 @@ BEGIN
  
     TR_ADMIN.SET_AS_FUND_APPLICATION;
     -->> Начало. Формирование ключа и назначения для логирования
-    rlog_key := to_char(sysdate,'YYYYMMDDHH24MISS');
+    rlog_key := $P0;
     rlog.dest := 'PRS_EXT_EXECUTOR.1';
     rlog.key_name := rlog_key; --по нему ищем записи потом.
     --<< Конец. Формирование ключа и назначения для логирования

@@ -59,7 +59,7 @@ def execute_oracle (user, ps, db, sql, threads_cnt, mod):
 
     #---------- ФУНКЦИЯ ДОПИСЫВАНИЯ В ФАЙЛ ----------
 
-def create_file(user, ps, db, sql, size, date_from, date_to, threads_cnt, mod, path, delimiter):
+def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter):
     print(datetime.datetime.now())
     txt = ''
     ins_size = 0
@@ -185,7 +185,7 @@ def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITE
 
     elif WHAT == 'Выгрузить':
         with open(path, 'w') as File_prev:
-            File_prev.write(columns)
+            File_prev.write(columns +'\n')
         File = open(path, 'a')
         start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter)
 

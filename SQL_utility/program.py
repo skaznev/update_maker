@@ -121,9 +121,12 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
 
     def add_basic_param(self, text):
         list_param = text.split(i_param_delim)
-        self.table_param_basic.setRowCount(len(list_param))
-        for i, param in enumerate(list_param):
-            self.table_param_basic.setItem(i, 0, self.createItem(param, QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled))
+        if not list_param == ['']:      # Отсекаем пустые 
+            self.table_param_basic.setRowCount(len(list_param))
+            for i, param in enumerate(list_param):
+                self.table_param_basic.setItem(i, 0, self.createItem(param, QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled))
+        else:
+            self.table_param_basic.setRowCount(0)
 
     def createItem(self, text, flags):
         tableWidgetItem = QtWidgets.QTableWidgetItem(text)
@@ -146,8 +149,9 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
 
     def param_to_sql(self, sql, code_run):
         # Базовые параметры
-        for i in range(self.table_param_basic.rowCount()):
-            sql = sql.replace(i_param_basic + str(i+1), '\'' + self.table_param_basic.item(i, 1).text() + '\'')
+        if not self.table_param_basic.rowCount() == 0:
+            for i in range(self.table_param_basic.rowCount()):
+                sql = sql.replace(i_param_basic + str(i+1), '\'' + self.table_param_basic.item(i, 1).text() + '\'')
         # Дополнительные параметры
         param_add = ''
         param_addit = self.text_param_addit.toPlainText().split('\n')
@@ -174,9 +178,10 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
         if (not self.line_user.text()) or (not self.line_pass.text()) or (not self.line_base.text()):
             return True
         # Чекнем базовые параметры
-        for i in range(self.table_param_basic.rowCount()):
-            if self.table_param_basic.item(i, 1) == None:
-                return True
+        if not self.table_param_basic.rowCount() == 0:
+            for i in range(self.table_param_basic.rowCount()):
+                if self.table_param_basic.item(i, 1) == None:
+                    return True
         # Чекнем директорию
         if self.combo_why.currentText() == type_select:
             if not self.line_path.text():

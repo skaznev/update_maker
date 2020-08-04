@@ -1,9 +1,9 @@
 import cx_Oracle as ora
 
 
-user = 'SAFONOVD'
-pas  = 'SAFONOVD_123'
-db   = 'XXI'
+user = ''
+pas  = ''
+db   = ''
 rep_date = '31.07.2020'
 nrd_date = '03.08.2020'
 nrd_notice = '42114184'
@@ -142,4 +142,4 @@ def execute(USER, PAS, DB, REPORT_DATE, NRD_DATE, NRD_NOTICE, REF_KD, LIST_TYPE,
             # a = cur.execute(sql_text, {'rep_date':rep_date, 'nrd_date':nrd_date, 'nrd_notice':nrd_notice, 'ref_kd':ref_kd, 'list_type':list_type, 'sec_isin_list':sec_isin_list, 'storage_list':storage_list, 'v_clob':clob, 'parts_cnt':part, 'mod':0})
 
 
-execute(user, pas, db, rep_date, nrd_date, nrd_notice, ref_kd, list_type, sec_isin_list, storage_list, out_path, part)
+# execute(user, pas, db, rep_date, nrd_date, nrd_notice, ref_kd, list_type, sec_isin_list, storage_list, out_path, part)

@@ -39,6 +39,12 @@ except:
 
     #---------- БЛОК ВСПОМОГАТЕЛЬНЫХ ФУНКЦИЙ ----------
 
+def nvl(a):
+    if a is None:
+        return ' '
+    else:
+        return(str(a))
+
     #---------- ФУНКЦИЯ ПОДСЧЕТА ДЛИНЫ СТРОКИ ----------
 
 def utf8len(s):
@@ -76,8 +82,11 @@ def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter):
         try:
 
             result = cur.fetchone()
-            for item in result:
-                i_txt += str(item) + delimiter                
+            lenght = len(result)
+            for i,item in enumerate(result):
+                i_txt += nvl(item) 
+                if i <  (lenght - 1):
+                    i_txt += delimiter                
             ins_size += utf8len(i_txt)
             if ins_size >= size:
                 ins_size = utf8len(i_txt)
@@ -136,7 +145,7 @@ def read_log (user, ps, db, CODE, sql_name):
     logs = cur.fetchall()
     for rec in logs:
         for item in rec:
-            log += str(item)
+            log += nvl(item)
         log += '\n'
 
     # А теперь полные логи считаем в файл
@@ -145,7 +154,7 @@ def read_log (user, ps, db, CODE, sql_name):
     logs = cur.fetchall()
     for rec in logs:
         for item in rec:
-            log_full += str(item) + delim
+            log_full += nvl(item) + delim
         log_full += '\n'
     with open(os.path.join(os.getcwd(), full_logs_path) + r'\\' + sql_name + '_' + CODE + r'''.txt''' ,'w', encoding= 'Windows-1251') as File:
         File.write(log_full)

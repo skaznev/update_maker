@@ -1,5 +1,5 @@
 import cx_Oracle as ora
-
+import os
 
 user = 'SAFONOVD'
 pas  = 'SAFONOVD_123'
@@ -13,6 +13,13 @@ sec_isin_list = 'RU000A1011S9'
 storage_list = 'NRDTR'
 part = 1
 out_path = 'X:/Инверсия/ФОНД/горелова/'
+
+try:
+    with open('set.txt', 'r') as file:
+        os.environ["PATH"] = file.read()                                    # Выставляем переменную окружения, что б cx_oracle не ругался
+        print('Считали set.txt')
+except:
+    print('Не найден файл настроек set.txt. PATH: ' + os.environ["PATH"] )
 
 sql_text = '''
 declare

@@ -4,7 +4,14 @@ from PyQt5 import QtWidgets, QtCore # Виджеты для экранной ф�
 import design
 import dtsec
 import cx_Oracle
+import os
 
+try:
+    with open('set.txt', 'r') as file:
+        os.environ["PATH"] = file.read()                                    # Выставляем переменную окружения, что б cx_oracle не ругался
+        print('Считали set.txt')
+except:
+    print('Не найден файл настроек set.txt. PATH: ' + os.environ["PATH"] )
 
 class application(QtWidgets.QMainWindow, design.Ui_MainWindow):
 

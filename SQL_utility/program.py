@@ -150,7 +150,7 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
     def param_to_sql(self, sql, code_run):
         # Базовые параметры
         if not self.table_param_basic.rowCount() == 0:
-            for i in range(self.table_param_basic.rowCount()):
+            for i in reversed(range(self.table_param_basic.rowCount())):    # В обратном порядке так как были ошибки что мы $P10 первым же параметром реплейсили (так как находили в нем $P1)
                 sql = sql.replace(i_param_basic + str(i+1), '\'' + self.table_param_basic.item(i, 1).text() + '\'')
         # Дополнительные параметры
         param_add = ''
@@ -166,6 +166,9 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
         sql = sql.replace(i_param_date_2, '\'' + str(self.date_to.date().toString("dd.MM.yyyy")) + '\'')
         # Идентификатор лога
         sql = sql.replace(i_param_log, '\'' + code_run + '\'')
+
+        #with open(os.getcwd() + r'\\' + code_run + '_' + r'''.txt''' ,'w', encoding= 'Windows-1251') as File:
+        #    File.write(sql)
 
         return sql
 

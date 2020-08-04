@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui.ui'
+# Form implementation generated from reading ui file 'c:\projects\update_maker\62\ui.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.0
+# Created by: PyQt5 UI code generator 5.13.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -93,14 +93,6 @@ class Ui_MainWindow(object):
         self.button_start_2 = QtWidgets.QPushButton(self.centralwidget)
         self.button_start_2.setGeometry(QtCore.QRect(225, 330, 61, 21))
         self.button_start_2.setObjectName("button_start_2")
-        self.label_12 = QtWidgets.QLabel(self.centralwidget)
-        self.label_12.setGeometry(QtCore.QRect(300, 90, 81, 16))
-        self.label_12.setObjectName("label_12")
-        self.spinBox = QtWidgets.QSpinBox(self.centralwidget)
-        self.spinBox.setGeometry(QtCore.QRect(400, 90, 42, 22))
-        self.spinBox.setMinimum(1)
-        self.spinBox.setSingleStep(1)
-        self.spinBox.setObjectName("spinBox")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 550, 21))
@@ -132,4 +124,3 @@ class Ui_MainWindow(object):
         self.label_10.setText(_translate("MainWindow", "База:"))
         self.label_11.setText(_translate("MainWindow", "Пользователь:"))
         self.button_start_2.setText(_translate("MainWindow", "Start"))
-        self.label_12.setText(_translate("MainWindow", "Кол-во частей:"))

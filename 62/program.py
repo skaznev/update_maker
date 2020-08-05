@@ -36,7 +36,7 @@ class application(QtWidgets.QMainWindow, design.Ui_MainWindow):
 
     def start(self):
         try:
-            dtsec.execute(USER = self.line_user.text(), PAS = self.line_pass.text(), DB = self.line_base.text(), REPORT_DATE = str(self.fix_date.date().toString("dd.MM.yyyy")), NRD_DATE = str(self.nrd_date.date().toString("dd.MM.yyyy")), NRD_NOTICE = self.nrd_notice.text(), REF_KD = self.ref_kd.text(), LIST_TYPE = self.list_type.currentText(), SEC_ISIN_LIST = self.isin_list.text(), STORAGE_LIST = self.storage_list.text(), OUT_PATH = str(str(self.exp_dir.text()) + r'/'), PART = self.spinBox.text())
+            dtsec.execute(USER = self.line_user.text(), PAS = self.line_pass.text(), DB = self.line_base.text(), REPORT_DATE = str(self.fix_date.date().toString("dd.MM.yyyy")), NRD_DATE = str(self.nrd_date.date().toString("dd.MM.yyyy")), NRD_NOTICE = self.nrd_notice.text(), REF_KD = self.ref_kd.text(), LIST_TYPE = self.list_type.currentText(), SEC_ISIN_LIST = self.isin_list.text(), STORAGE_LIST = self.storage_list.text(), OUT_PATH = str(str(self.exp_dir.text()) + r'/'))
             QtWidgets.QMessageBox.information(self,'Информация', '''Файлы были успешно экспортированы. Каталог:\n''' + str(self.exp_dir.text()) )
         except Exception as e:
             QtWidgets.QMessageBox.information(self,'ERROR!!!', '''Произошла критическая ошибка:\n''' + str(e))

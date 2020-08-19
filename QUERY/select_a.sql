@@ -1,6 +1,7 @@
--- Дата расчетов|Дата расчетов (dd.mm.yyyy)|Дата поставки
--- $delimiter = "|"
+-- 
+-- $delimiter = ;
 -- $threads = 3
+-- $columns = дата|пидата
 /*Описание скрипта / запроса*/
 select * from tr_api_log 
-where van = '1'
+where mod(nums, :threads_cnt) = :mod

@@ -2,7 +2,7 @@
     #---------- ПОДКЛЮЧАЕМ БИБЛИОТЕКИ ----------
 
 import cx_Oracle as ora
-from multiprocessing import Process
+from multiprocessing import Process , Value , Lock
 import datetime
 import os
 
@@ -22,10 +22,30 @@ i_log_id        = r'PRS_EXT_EXECUTOR.1'
 sql_log_small   = r'''select * from ext_api_log WHERE key_name = :code_run'''
 sql_log_full    = r'''select * from ext_api_log WHERE key_name = :code_run'''
 full_logs_path  = 'logs'
+lenght_file     = 0
+cut             = 1000000    # Кол-во строк для обрезки файла
+
+# Определим заодно крутой многопроцессинговый счетчик отфетчиных строк
+class Counter(object):
+    def __init__(self, initval=0):
+        self.val = Value('i', initval)
+        self.lock = Lock()
+
+    def increment(self):
+        with self.lock:
+            self.val.value += 1
+
+    def reset(self):
+        with self.lock:
+            self.val.value = 0
+
+    def value(self):
+        with self.lock:
+            return self.val.value
 
 try:
     with open('log.sql', 'r') as file:
-        sql_log_small = file.read()                                    # Читаем с файла, вдруг че поменяют.
+        sql_log_small = file.read()                                   # Читаем с файла, вдруг че поменяют.
 except:
     print('Не найден файл c логом log.sql.')
 
@@ -39,11 +59,15 @@ except:
 
     #---------- БЛОК ВСПОМОГАТЕЛЬНЫХ ФУНКЦИЙ ----------
 
+    #---------- ФУНКЦИЯ ПЕРЕВОДА ЗНАЧЕНИЙ В НОРМАЛЬНЫЙ ВИД ----------
+
 def nvl(a):
     if a is None:
         return ' '
     else:
         return(str(a))
+
+    #---------- КОНЕЦ: ФУНКЦИЯ ПЕРЕВОДА ЗНАЧЕНИЙ В НОРМАЛЬНЫЙ ВИД ----------
 
     #---------- ФУНКЦИЯ ПОДСЧЕТА ДЛИНЫ СТРОКИ ----------
 
@@ -51,6 +75,8 @@ def utf8len(s):
     return len(s.encode('ANSI'))
 
     #---------- КОНЕЦ: ФУНКЦИЯ ПОДСЧЕТА ДЛИНЫ СТРОКИ ----------
+
+#---------- ФУНКЦИЯ ЗАПУСК КОННЕКТА ----------
 
 def execute_oracle (user, ps, db, sql, threads_cnt, mod):
     print(datetime.datetime.now())
@@ -62,10 +88,11 @@ def execute_oracle (user, ps, db, sql, threads_cnt, mod):
     else:
         cur.execute(sql, {'threads_cnt':threads_cnt, 'mod':mod})
 
+    #---------- КОНЕЦ: ФУНКЦИЯ ЗАПУСК КОННЕКТА ----------
 
     #---------- ФУНКЦИЯ ДОПИСЫВАНИЯ В ФАЙЛ ----------
 
-def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter):
+def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter, V):
     print(datetime.datetime.now())
     txt = ''
     ins_size = 0
@@ -83,6 +110,10 @@ def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter):
 
             result = cur.fetchone()
             lenght = len(result)
+            
+            # Пополним счетчик отфетчиных строк на +1
+            V.increment() 
+
             for i,item in enumerate(result):
                 i_txt += nvl(item) 
                 if i <  (lenght - 1):
@@ -104,7 +135,7 @@ def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter):
 
     #---------- КОНЕЦ: ФУНКЦИЯ ДОПИСЫВАНИЯ В ФАЙЛ ----------
 
-    #---------- ФУНКЦИЯ РАСКИДЫВАЮЩАЯ ЗАДАЧУ ПО ПОТОКАМ ----------
+    #---------- ФУНКЦИИ РАСКИДЫВАЮЩЧЮ ЗАДАЧУ ПО ПОТОКАМ ----------
 
 def start_script(user, ps, db, sql, threads_cnt):
     threads = []
@@ -117,11 +148,11 @@ def start_script(user, ps, db, sql, threads_cnt):
     for thread in threads:
         thread.join()
 
-def start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter):
+def start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, V):
     threads = []
 
     for i in range(threads_cnt):
-        thread = Process(target=create_file, args=(user, ps, db, sql, buff_size, threads_cnt, i, path, delimiter))
+        thread = Process(target=create_file, args=(user, ps, db, sql, buff_size, threads_cnt, i, path, delimiter, V))
         threads.append(thread)
         thread.start()
 
@@ -164,9 +195,23 @@ def read_log (user, ps, db, CODE, sql_name):
 
     #---------- КОНЕЦ: ФУНКЦИЯ СЧИТАЙ ЛОГИ ----------
 
+    #---------- ФУНКЦИЯ ПОДСЧЕТА КОЛ-ВА СТРОК В ФРАКЦИИ ----------
+
+def for_fract(x, y, z):
+    global cut
+    if x < y-1:
+        return cut-1 # так как первая строка заголовок, а последняя пустая
+    return z%cut
+
+    #---------- КОНЕЦ: ФУНКЦИЯ КОЛ-ВА СТРОК В ФРАКЦИИ ----------
+
     #---------- КОНЕЦ: БЛОК ВСПОМОГАТЕЛЬНЫХ ФУНКЦИЙ ----------
 
+
+
     #---------- ГЛАВНАЯ ФУНКЦИЯ!!!!!!!!!! ----------
+
+
 
 def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITER, COLUMNS, CODE_RUN):
 
@@ -174,7 +219,8 @@ def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITE
     global threads_cnt
     global columns
     global sql
-    
+    global cut
+
     user        = USER
     ps          = PASSWORD
     db          = DB
@@ -188,6 +234,9 @@ def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITE
     sql_name    = SQL_NAME
     logs        =''
     
+    # Объявим счетчик строк
+    v = Counter(0)
+    
     if what == 'Выполнить':
         start_script(user, ps, db, sql, threads_cnt)
         logs = read_log(user, ps, db, code_run, sql_name)
@@ -195,8 +244,33 @@ def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITE
     elif WHAT == 'Выгрузить':
         with open(path, 'w') as File_prev:
             File_prev.write(columns +'\n')
+        
         File = open(path, 'a')
-        start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter)
+        start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, v)
+        
+        # кол-во строк в файле (отфетченные + 1 строка (заголовок))
+        lenght_file = v.value()+1  
 
+        # Если строк больше 1млн то дробим файл на части
+        if lenght_file > cut:    
+            with open(path, 'r', encoding= 'Windows-1251') as File_pre:
+                if_1 = True
+                # Посчитаем количество фракций на которые мы дробим файл
+                fract_all = lenght_file//cut + 1
+                # Распилим биг файл на много мелких
+                for i in range(fract_all):     
+                    fract = [next(File_pre) for x in range(for_fract(i, fract_all, lenght_file))]
+                    with open(path[:-4] + '_' + str(i) + r'.csv', 'w', encoding= 'Windows-1251') as File_post:
+                        # В первом файле и так есть шапка с колонками
+                        if not if_1:
+                            File_post.write(columns +'\n')
+                        if_1= False
+                        for f in fract:
+                            File_post.write(f)
+                        
+    # Обнулим счетчик строк
+    v.reset()
+    
     return logs
+    
     #---------- КОНЕЦ: ГЛАВНАЯ ФУНКЦИЯ!!!!!!!!!! ----------

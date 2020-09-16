@@ -18,6 +18,8 @@ last_report_date_atr    = 'LastReportDate'
 isin_path               = 'FATCA_ASSET//REPORT_DATE//SECURITY'
 isin_atr                = 'IssueISIN'
 
+file_pref               = 'PAYMENT_REPORT_TKBNM_'
+
 with open(r'sql.sql', 'r', encoding='UTF-8') as file:
     sql_text = file.read()
 
@@ -43,6 +45,7 @@ def getValueXml (valueList, attrib):
 def getDate (field, timemask):
     c = time.strptime(field, timemask)
     return datetime.date(c[0], c[1], c[2])
+
 
 
 def execute (PATH_IN, PATH_OUT, USER, PASSWORD, DATABASE):
@@ -84,10 +87,11 @@ def execute (PATH_IN, PATH_OUT, USER, PASSWORD, DATABASE):
         pay_rep_date = getDate(pay_rep_date_str, '%Y-%m-%d')
         last_rep_date_str = getValueXml(last_report_date_path, last_report_date_atr)
         last_rep_date = getDate(last_rep_date_str, '%Y-%m-%d')
+        date_now_str = str(time.strftime('%Y-%m-%d'))
         clob = cur.var(cx_Oracle.CLOB)
         try:
             a = cur.execute(sql_text, {'v_rep_date':rep_date, 'v_sec_isin':isin, 'v_doc_ref':doc_ref, 'v_request_no':request_no, 'v_pay_rep_date':pay_rep_date, 'v_last_rep_date':last_rep_date, 'v_clob':clob})
-            with open(PATH_OUT + '/' + isin + rep_date_str + '_' + str(numb) + '.xml', 'w') as file:
+            with open(PATH_OUT + '/' + file_pref + isin + '_' + date_now_str + '.xml', 'w') as file:
                     file.writelines(str(clob.getvalue()))
         except Exception as e:
             print('Бумага с ISIN ' + isin + ' не обработана')

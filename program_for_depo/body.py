@@ -47,7 +47,6 @@ def getDate (field, timemask):
     return datetime.date(c[0], c[1], c[2])
 
 
-
 def execute (PATH_IN, PATH_OUT, USER, PASSWORD, DATABASE):
     
     global doc_no_path
@@ -87,7 +86,7 @@ def execute (PATH_IN, PATH_OUT, USER, PASSWORD, DATABASE):
         pay_rep_date = getDate(pay_rep_date_str, '%Y-%m-%d')
         last_rep_date_str = getValueXml(last_report_date_path, last_report_date_atr)
         last_rep_date = getDate(last_rep_date_str, '%Y-%m-%d')
-        date_now_str = str(time.strftime('%Y-%m-%d'))
+        date_now_str = str(time.strftime('%Y%m%d'))
         clob = cur.var(cx_Oracle.CLOB)
         try:
             a = cur.execute(sql_text, {'v_rep_date':rep_date, 'v_sec_isin':isin, 'v_doc_ref':doc_ref, 'v_request_no':request_no, 'v_pay_rep_date':pay_rep_date, 'v_last_rep_date':last_rep_date, 'v_clob':clob})

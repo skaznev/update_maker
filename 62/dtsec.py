@@ -124,6 +124,7 @@ def execute(USER, PAS, DB, REPORT_DATE, NRD_DATE, NRD_NOTICE, REF_KD, LIST_TYPE,
     pas = PAS
     db = DB
     rep_date = REPORT_DATE
+    nrd_date = NRD_DATE
     nrd_notice = NRD_NOTICE
     ref_kd = REF_KD
     list_type = LIST_TYPE

@@ -4,8 +4,8 @@ import cx_Oracle as ora
 user = ''
 pas  = ''
 db   = ''
-rep_date = '01.01.2020'
-nrd_date = '02.01.2020'
+rep_date = '01.09.2020'
+nrd_date = '01.09.2020'
 nrd_notice = '5654645'
 ref_kd = '5645464'
 list_type = 'OWNL'
@@ -2097,6 +2097,7 @@ BEGIN
                          order by col_x ) as xml
                from FUND_DB.TR_INQ_REPORT_MRT
               where inq_id  = i_inq_id
+              and mod(row_num, parts_cnt) = mod_
               group
                  by col_aa    -- Для объединения остатков
            ) BAL

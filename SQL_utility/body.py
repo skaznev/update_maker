@@ -126,7 +126,7 @@ def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter, V):
                         File.write(txt)
                         txt = ''                
                 except Exception as e:
-                print(e)        
+                    print(e)        
             txt += i_txt.replace('\n', '') + '\n'
 
         except Exception as e:

@@ -130,8 +130,11 @@ def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter, V):
             txt += i_txt.replace('\n', '') + '\n'
 
         except Exception as e:
-            with open(path, 'a') as File:
-                    File.write(txt)
+            try:
+                with open(path, 'a') as File:
+                        File.write(txt)
+            except Exception as e:
+                print(e)               
             print(datetime.datetime.now())
             conn.close()
             return

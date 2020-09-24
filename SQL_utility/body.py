@@ -121,9 +121,12 @@ def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter, V):
             ins_size += utf8len(i_txt)
             if ins_size >= size:
                 ins_size = utf8len(i_txt)
-                with open(path, 'a') as File:
-                    File.write(txt)
-                    txt = ''                
+                try:
+                    with open(path, 'a') as File:
+                        File.write(txt)
+                        txt = ''                
+                except Exception as e:
+                print(e)        
             txt += i_txt.replace('\n', '') + '\n'
 
         except Exception as e:

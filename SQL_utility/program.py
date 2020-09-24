@@ -35,6 +35,8 @@ try:
     with open('set.txt', 'r') as file:
         os.environ["PATH"] = file.read()                                    # Выставляем переменную окружения, что б cx_oracle не ругался
 except:
+    gg = os.environ["PATH"]
+    os.environ["PATH"] = gg.replace(r'X:\orant\bin;', '')
     print('Не найден файл настроек set.txt. PATH: ' + os.environ["PATH"] )
 
 try:

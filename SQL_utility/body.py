@@ -43,6 +43,18 @@ class Counter(object):
         with self.lock:
             return self.val.value
 
+
+class i_file(object):
+    def __init__(self):
+        self.lock = Lock()
+
+    def write(self, txt, path):
+        with self.lock:
+            with open(path, 'a') as File:
+                File.write(txt)
+
+
+
 try:
     with open('log.sql', 'r') as file:
         sql_log_small = file.read()                                   # Читаем с файла, вдруг че поменяют.
@@ -92,7 +104,15 @@ def execute_oracle (user, ps, db, sql, threads_cnt, mod):
 
     #---------- ФУНКЦИЯ ДОПИСЫВАНИЯ В ФАЙЛ ----------
 
-def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter, V):
+def insert_in_file(txt, lock, path):
+    lock.acquire()
+    try:
+        with open(path, 'a') as File:
+            File.write(txt)
+    finally:
+        lock.release()
+
+def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter, V, files):
     print(datetime.datetime.now())
     txt = ''
     ins_size = 0
@@ -122,9 +142,8 @@ def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter, V):
             if ins_size >= size:
                 ins_size = utf8len(i_txt)
                 try:
-                    with open(path, 'a') as File:
-                        File.write(txt)
-                        txt = ''                
+                    files.write(txt, path)
+                    txt = ''                
                 except Exception as e:
                     print(e)        
             txt += i_txt.replace('\n', '') + '\n'
@@ -154,11 +173,11 @@ def start_script(user, ps, db, sql, threads_cnt):
     for thread in threads:
         thread.join()
 
-def start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, V):
+def start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, V, lock):
     threads = []
 
     for i in range(threads_cnt):
-        thread = Process(target=create_file, args=(user, ps, db, sql, buff_size, threads_cnt, i, path, delimiter, V))
+        thread = Process(target=create_file, args=(user, ps, db, sql, buff_size, threads_cnt, i, path, delimiter, V, lock))
         threads.append(thread)
         thread.start()
 
@@ -219,7 +238,7 @@ def for_fract(x, y, z):
 
 
 
-def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITER, COLUMNS, CODE_RUN):
+def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITER, COLUMNS, CODE_RUN, LOCK):
 
     global buff_size
     global threads_cnt
@@ -242,6 +261,7 @@ def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITE
     
     # Объявим счетчик строк
     v = Counter(0)
+    files = i_file()
     
     if what == 'Выполнить':
         start_script(user, ps, db, sql, threads_cnt)
@@ -252,7 +272,7 @@ def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITE
             File_prev.write(columns +'\n')
         
         File = open(path, 'a')
-        start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, v)
+        start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, v, files)
         
         # кол-во строк в файле (отфетченные + 1 строка (заголовок))
         lenght_file = v.value()+1  

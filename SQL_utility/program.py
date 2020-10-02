@@ -35,6 +35,8 @@ try:
     with open('set.txt', 'r') as file:
         os.environ["PATH"] = file.read()                                    # Выставляем переменную окружения, что б cx_oracle не ругался
 except:
+    gg = os.environ["PATH"]
+    os.environ["PATH"] = gg.replace(r'X:\orant\bin;', '')
     print('Не найден файл настроек set.txt. PATH: ' + os.environ["PATH"] )
 
 try:
@@ -219,7 +221,8 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
                                     DELIMITER   = self.return_param(text = sql, param = i_delimiter),
                                     THREADS_CNT = self.return_param(text = sql, param = i_threads_cnt),
                                     COLUMNS     = self.return_param(text = sql, param = i_columns),
-                                    CODE_RUN    = code_run
+                                    CODE_RUN    = code_run,
+                                    LOCK        = lock
                                     )
                 QtWidgets.QMessageBox.information(self,'Информация', '''Завершено успешно!\n''' + logs)
             except Exception as e:
@@ -246,6 +249,7 @@ def main():
     #---------- ВЫЗОВ ФУНКЦИИ СОЗДАНИЯ ЭКРАННОЙ ФОРМЫ ----------
 
 if __name__ == '__main__':              # Если мы запускаем файл напрямую, а не импортируем
+    lock = multiprocessing.Lock()
     multiprocessing.freeze_support()    # Вот эта муть позволяет тормозить лишние окна, ибо мультипроцессинг начинает их активно генерить
     main()                              # то запускаем функцию main()
 

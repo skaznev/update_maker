@@ -17,8 +17,11 @@ path_in     = ''                        # Директория с исходны
 path_out    = ''                        # Директория с обработанными файлами
 try:
     with open('set.txt', 'r') as file:
-        os.environ["PATH"] = file.read()    # Выставляем переменную окружения, что б cx_oracle не ругался
+        os.environ["PATH"] = file.read() + os.environ["PATH"].replace(r'X:\orant\bin;', '')                                    # Выставляем переменную окружения, что б cx_oracle не ругался
+        print('PATH:', os.environ['PATH'])
 except:
+    gg = os.environ["PATH"]
+    os.environ["PATH"] = gg.replace(r'X:\orant\bin;', '')
     print('Не найден файл настроек set.txt. PATH: ' + os.environ["PATH"] )
 
 
@@ -67,8 +70,9 @@ class update_maker_App(QtWidgets.QMainWindow, design_pyqt.Ui_MainWindow):
         try: 
             mxml.execute(FILE_TYPE = self.combo_file_type.currentText() ,PATH_IN = self.line_dir_1.text(), PATH_OUT = self.line_dir_2.text(), USER = self.line_user.text(), PASSWORD = self.line_pass.text(), DATABASE = self.line_base.text())
             QtWidgets.QMessageBox.information(self,'Информация', '''Файлы были успешно обработаны. Каталог:\n''' + str(self.line_dir_2.text()) )
-        except:
-            QtWidgets.QMessageBox.information(self,'ERROR!!!', '''Произошла критическая ошибка:\n''' + str(sys.exc_info()) )
+        except Exception as e:
+            QtWidgets.QMessageBox.information(self,'ERROR!!!', '''Произошла критическая ошибка:\n''' + str(e))
+            print(e)
             
 
     #---------- ФУНКЦИЯ ПОД КНОПКОЙ "СТАРТ" ----------    

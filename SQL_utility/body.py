@@ -24,6 +24,8 @@ sql_log_full    = r'''select * from ext_api_log WHERE key_name = :code_run'''
 full_logs_path  = 'logs'
 lenght_file     = 0
 cut             = 1000000    # Кол-во строк для обрезки файла
+i_plsql_start   = r'-- PL/SQL START'
+i_plsql_end     = r'-- PL/SQL END'
 
 # Определим заодно крутой многопроцессинговый счетчик отфетчиных строк
 class Counter(object):
@@ -104,25 +106,24 @@ def execute_oracle (user, ps, db, sql, threads_cnt, mod):
 
     #---------- ФУНКЦИЯ ДОПИСЫВАНИЯ В ФАЙЛ ----------
 
-def insert_in_file(txt, lock, path):
-    lock.acquire()
-    try:
-        with open(path, 'a') as File:
-            File.write(txt)
-    finally:
-        lock.release()
-
-def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter, V, files):
+def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter, V, files, PYTHON_INQ):
     print(datetime.datetime.now())
     txt = ''
     ins_size = 0
 
     conn = ora.connect(user, ps, db)
     cur = conn.cursor()
-    if threads_cnt == 1:
-        cur.execute(sql)
+
+    if PYTHON_INQ == 0:
+        if threads_cnt == 1:
+            cur.execute(sql)
+        else:
+            cur.execute(sql, {'threads_cnt':threads_cnt, 'mod':mod})
     else:
-        cur.execute(sql, {'threads_cnt':threads_cnt, 'mod':mod})
+        if threads_cnt == 1:
+            cur.execute(sql,{'python_inq':PYTHON_INQ})
+        else:
+            cur.execute(sql, {'threads_cnt':threads_cnt, 'mod':mod, 'python_inq':PYTHON_INQ})
     
     while True:       
         i_txt = ''
@@ -173,11 +174,26 @@ def start_script(user, ps, db, sql, threads_cnt):
     for thread in threads:
         thread.join()
 
-def start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, V, lock):
+def start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, V, lock, PL_SQL, INQ_FLAG):
+    python_inq = 0
+    # Если перед селектом надо вызвать PL_SQL код, то давайте вызовем, а потом стартанем треды с селектами
+    if not PL_SQL == '':
+        print('plsql start')
+        conn = ora.connect(user, ps, db)
+        cur = conn.cursor()
+        ora_inq = cur.var(ora.NUMBER)
+        # Если идентификатор отчёта нужен, то привяжем переменную
+        if INQ_FLAG == True:
+            cur.execute(PL_SQL, {'python_inq':ora_inq})
+            python_inq = int(ora_inq.getvalue())
+        else:
+            cur.execute(PL_SQL)
+        print('plsql end, python_inq:', python_inq)
+
     threads = []
 
     for i in range(threads_cnt):
-        thread = Process(target=create_file, args=(user, ps, db, sql, buff_size, threads_cnt, i, path, delimiter, V, lock))
+        thread = Process(target=create_file, args=(user, ps, db, sql, buff_size, threads_cnt, i, path, delimiter, V, lock, python_inq))
         threads.append(thread)
         thread.start()
 
@@ -257,8 +273,9 @@ def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITE
     columns     = COLUMNS.replace(delim,delimiter)
     code_run    = CODE_RUN
     sql_name    = SQL_NAME
-    logs        =''
-    
+    logs        = ''
+    pl_sql      = ''
+
     # Объявим счетчик строк
     v = Counter(0)
     files = i_file()
@@ -271,8 +288,24 @@ def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITE
         with open(path, 'w') as File_prev:
             File_prev.write(columns +'\n')
         
+        # Считаем из скрипта PL/SQL блок (если он там есть)
+        plsql_flag = False
+        inq_flag   = False
+        for string in sql.split('\n'):
+            if i_plsql_start in string:
+                plsql_flag = True
+            if plsql_flag == True:
+                pl_sql += string + '\n'
+            if i_plsql_end in string:
+                if 'python_inq' in pl_sql:
+                    inq_flag = True
+                break
+            
+        print('pl_sql =', pl_sql, 'inq_flag =', inq_flag)
+
+
         File = open(path, 'a')
-        start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, v, files)
+        start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, v, files, pl_sql, inq_flag)
         
         # кол-во строк в файле (отфетченные + 1 строка (заголовок))
         lenght_file = v.value()+1  

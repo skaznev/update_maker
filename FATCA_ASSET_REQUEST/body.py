@@ -22,6 +22,7 @@ doc_subtype_atr         = 'DOC_SUBTYPE'
 
 file_pref_asset         = 'ASSET_REPORT_TKBNM_'
 file_pref_payment       = 'PAYMENT_REPORT_TKBNM_'
+file_pref_planned_asset = 'PLANNED_ASSET_REPORT_TKBNM_'
 
 
 with open(r'sql/asset.sql', 'r', encoding='UTF-8') as file:
@@ -29,6 +30,9 @@ with open(r'sql/asset.sql', 'r', encoding='UTF-8') as file:
 
 with open(r'sql/payment.sql', 'r', encoding='UTF-8') as file:
     sql_payment_text = file.read()
+
+with open(r'sql/planned_asset.sql', 'r', encoding='UTF-8') as file:
+    sql_planned_asset_text = file.read()
 
 # sql_text = ''
 # for i in a:
@@ -107,8 +111,11 @@ def execute (FILE_TYPE, PATH_IN, PATH_OUT, USER, PASSWORD, DATABASE):
             if file_type == 'FATCA_ASSET_REQUEST' and doc_subtype == 'ASSET_REQUEST':
                 file_pref = file_pref_asset
                 cur.execute(sql_asset_text, {'v_rep_date':rep_date, 'v_sec_isin':isin, 'v_doc_ref':doc_ref, 'v_request_no':request_no, 'v_pay_rep_date':pay_rep_date, 'v_last_rep_date':last_rep_date, 'v_clob':clob})    
+            if file_type == 'PLANNED_ASSET_REQUEST' and doc_subtype == 'PLANNED_ASSET_REQUEST':
+                file_pref = file_pref_planned_asset
+                cur.execute(sql_planned_asset_text, {'v_rep_date':rep_date, 'v_sec_isin':isin, 'v_doc_ref':doc_ref, 'v_request_no':request_no, 'v_pay_rep_date':pay_rep_date, 'v_last_rep_date':last_rep_date, 'v_clob':clob})
             with open(PATH_OUT + '/' + file_pref + isin + '_' + date_now_str + '.xml', 'w') as file:
-                    file.writelines(str(clob.getvalue()))
+                file.writelines(str(clob.getvalue()))
         except Exception as e:
             print('Бумага с ISIN ' + isin + ' не обработана')
             print(e)

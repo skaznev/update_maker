@@ -87,7 +87,10 @@ def execute (FILE_TYPE, PATH_IN, PATH_OUT, USER, PASSWORD, DATABASE):
 
     files = os.listdir(PATH_IN)
     
-    numb = 0
+    cnt_success = 0
+    cnt_error = 0
+    error_msg = ''
+    msg = ''
     for fle in files:
         fileXml = open(os.path.join(PATH_IN, fle))
         file = et.ElementTree(file = fileXml)
@@ -116,8 +119,16 @@ def execute (FILE_TYPE, PATH_IN, PATH_OUT, USER, PASSWORD, DATABASE):
                 cur.execute(sql_planned_asset_text, {'v_rep_date':rep_date, 'v_sec_isin':isin, 'v_doc_ref':doc_ref, 'v_request_no':request_no, 'v_pay_rep_date':pay_rep_date, 'v_last_rep_date':last_rep_date, 'v_clob':clob})
             with open(PATH_OUT + '/' + file_pref + isin + '_' + date_now_str + '.xml', 'w') as file:
                 file.writelines(str(clob.getvalue()))
+            cnt_success += 1
         except Exception as e:
             print('Бумага с ISIN ' + isin + ' не обработана')
             print(e)
+            error_msg += 'Бумага с ISIN ' + isin + ' не обработана\n'
+            error_msg += str(e) + '\n'
+            cnt_error += 1
             continue
-        numb += 1
+
+    msg = 'Обработано ' + str(cnt_success) + ' из ' + str(cnt_success+cnt_error) + ' файлов.\n' + error_msg
+
+    return msg
+        

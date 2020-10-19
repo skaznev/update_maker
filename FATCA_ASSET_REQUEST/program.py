@@ -68,8 +68,8 @@ class update_maker_App(QtWidgets.QMainWindow, design_pyqt.Ui_MainWindow):
     
     def start(self):
         try: 
-            mxml.execute(FILE_TYPE = self.combo_file_type.currentText() ,PATH_IN = self.line_dir_1.text(), PATH_OUT = self.line_dir_2.text(), USER = self.line_user.text(), PASSWORD = self.line_pass.text(), DATABASE = self.line_base.text())
-            QtWidgets.QMessageBox.information(self,'Информация', '''Файлы были успешно обработаны. Каталог:\n''' + str(self.line_dir_2.text()) )
+            msg = mxml.execute(FILE_TYPE = self.combo_file_type.currentText() ,PATH_IN = self.line_dir_1.text(), PATH_OUT = self.line_dir_2.text(), USER = self.line_user.text(), PASSWORD = self.line_pass.text(), DATABASE = self.line_base.text())
+            QtWidgets.QMessageBox.information(self,'Информация', msg )
         except Exception as e:
             QtWidgets.QMessageBox.information(self,'ERROR!!!', '''Произошла критическая ошибка:\n''' + str(e))
             print(e)

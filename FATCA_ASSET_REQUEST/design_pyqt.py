@@ -50,6 +50,7 @@ class Ui_MainWindow(object):
         self.line_user.setObjectName("line_user")
         self.line_pass = QtWidgets.QLineEdit(self.centralwidget)
         self.line_pass.setGeometry(QtCore.QRect(450, 100, 101, 20))
+        self.line_pass.setEchoMode(QtWidgets.QLineEdit.Password)
         self.line_pass.setObjectName("line_pass")
         self.label_4 = QtWidgets.QLabel(self.centralwidget)
         self.label_4.setGeometry(QtCore.QRect(10, 100, 181, 16))

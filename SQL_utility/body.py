@@ -176,7 +176,7 @@ def start_script(user, ps, db, sql, threads_cnt):
 
 def start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, V, lock, PL_SQL, INQ_FLAG):
     python_inq = 0
-    # Если перед селектом надо вызвать PL_SQL код, то давайте вызовем, а потом стартанем треды с селектами
+    # Если перед селектом надо вызвать PL_SQL код, то давайте вызовем в 1 поток, а потом стартанем треды с селектами
     if not PL_SQL == '':
         print('plsql start')
         conn = ora.connect(user, ps, db)

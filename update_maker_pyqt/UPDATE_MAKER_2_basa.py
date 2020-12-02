@@ -9,14 +9,13 @@ from tkinter import messagebox   # Высплывающие окна
 import tkinter.ttk        as ttk # комбобоксы и прочее
 import upd_mk_exec        as um  # Наш самописный модуль с логикой запаковки файлов в обновление
 import subprocess         as sp  # Модуль работы с процессами (командная строка по сути)
-import sys                       # Системный, для отладки.
 
 
 # Обьявляем необходимые переменные:
 i_window            = tk.Tk()              # Переменная, которая содержит в себе всё окно (по сути это просто такой объект из модуля tkiner)
 path                = ''                   # Директория.
 path_stock          = r'''X:\Инверсия\ФОНД\U\FUND_DB\TEST'''
-path_build_stock    = '''\\PATH'''
+path_build_stock    = r'''С:\temp\update_maker'''
 path_stock_scripts  = r'''\\fs-inversiya\inversiya$\инверсия\ФОНД\Скрипты'''
 i_path              = tk.Entry(width = 50) # Текстовое окно (на форме) с выбранной директорией.
 i_base              = tk.Entry(width = 10) # Текстовое окно (на форме) с базой.
@@ -44,17 +43,17 @@ def open_dir (): # Объявляем функцию выбора директо
 def upd_maker ():
     try: 
         global path_build_stock
-        path_build = i_path.get() +  path_build_stock
-        um.exec(PATH = i_path.get(), PATH_BUILD = path_build, PATH_STOCK_SCRIPTS = path_stock_scripts)
+        path_build = path_build_stock
+        crossing = um.exec(PATH = i_path.get(), PATH_BUILD = path_build, PATH_STOCK_SCRIPTS = path_stock_scripts , BASE = i_combobox_base.get())
+        if not crossing == '':
+            messagebox.showinfo('Info', 'Были пересечения с другими версиями на тесте (!!!): ' + '\n' + crossing)
         if i_combobox_var.get() == i_comb_var_inst:
             s = sp.Popen( path_build + r'''\\RunMe.bat ''' + i_combobox_base.get() , cwd = path_build, creationflags=sp.CREATE_NEW_CONSOLE)
-            print('hui')
             s.communicate ()
-            print('hui2')
         else:
             messagebox.showinfo('Info', 'Обновление запаковано в ' + path_build)
-    except:
-        messagebox.showinfo('ERROR!!!', '''ОБНОВЛЕНИЕ НЕ ЗАПАКОВАНО!!!\nПроизошла ошибка в процедуре запаковки:\n''' + str(sys.exc_info()) )
+    except Exception as e:
+        messagebox.showinfo('ERROR!!!', '''ОБНОВЛЕНИЕ НЕ ЗАПАКОВАНО!!!\nПроизошла ошибка в процедуре запаковки:\n''' + str(e) )
     finally:
         path_build = ''
 

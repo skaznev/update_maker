@@ -260,7 +260,7 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE):
             for file in files:
                 if chr(root).lower() == path.lower():
                     continue
-                else file.lower() == FILE.lower():
+                elif file.lower() == FILE.lower():
                     print(os.path.join(root, file))
                     files_crossing += 'Пересечение: ' + chr(os.path.join(root, file)) + '\n'
 

@@ -9,14 +9,18 @@ from tkinter import messagebox   # Высплывающие окна
 import tkinter.ttk        as ttk # комбобоксы и прочее
 import upd_mk_exec        as um  # Наш самописный модуль с логикой запаковки файлов в обновление
 import subprocess         as sp  # Модуль работы с процессами (командная строка по сути)
+import cx_Oracle                 #
+import os
+
 
 
 # Обьявляем необходимые переменные:
 i_window            = tk.Tk()              # Переменная, которая содержит в себе всё окно (по сути это просто такой объект из модуля tkiner)
 path                = ''                   # Директория.
 path_stock          = r'''X:\Инверсия\ФОНД\U\FUND_DB\TEST'''
-path_build_stock    = r'''С:\temp\update_maker'''
+path_build_stock    = r'''C:\Temp\update_maker'''
 path_stock_scripts  = r'''\\fs-inversiya\inversiya$\инверсия\ФОНД\Скрипты'''
+path_backup         = r'''C:\Temp\update_maker\backup'''
 i_path              = tk.Entry(width = 50) # Текстовое окно (на форме) с выбранной директорией.
 i_base              = tk.Entry(width = 10) # Текстовое окно (на форме) с базой.
 i_label_dir         = tk.Label(text = 'Директория с обновлением:')
@@ -27,7 +31,16 @@ i_combobox_var      = ttk.Combobox(i_window)
 i_comb_var_pak      = 'Запаковать'
 i_comb_var_inst     = 'Запаковать и установить'
 
+try:
+    with open('set.txt', 'r') as file:
+        os.environ["PATH"] = file.read()                                    # Выставляем переменную окружения, что б cx_oracle не ругался
+except:
+    gg = os.environ["PATH"]
+    os.environ["PATH"] = gg.replace(r'X:\orant\bin;', '')
+    print('Не найден файл настроек set.txt. PATH: ' + os.environ["PATH"] )
+
 # установим заголовок для окна:
+
 i_window.title('Программа запаковки обновлений ПО "ФОНД"') # логично что для этого просто нужно использовать соответсвующий метод title который в качестве параметра приводит название окна.
 i_combobox_base['values'] = ('XXI_PRE', 'XXI_TEST')
 i_combobox_var['values'] = (i_comb_var_pak, i_comb_var_inst)
@@ -43,10 +56,13 @@ def open_dir (): # Объявляем функцию выбора директо
 def upd_maker ():
     try: 
         global path_build_stock
+        global path_backup
         path_build = path_build_stock
-        crossing = um.exec(PATH = i_path.get(), PATH_BUILD = path_build, PATH_STOCK_SCRIPTS = path_stock_scripts , BASE = i_combobox_base.get())
+        crossing = um.exec(PATH = i_path.get(), PATH_BUILD = path_build, PATH_STOCK_SCRIPTS = path_stock_scripts , BASE = i_combobox_base.get(), PATH_STOCK = path_stock, PATH_BACKUP = path_backup)
         if not crossing == '':
-            messagebox.showinfo('Info', 'Были пересечения с другими версиями на тесте (!!!): ' + '\n' + crossing)
+            messagebox.showinfo('Info', 'Были пересечения с другими версиями на тесте (!!!): ' + crossing)
+        if i_combobox_base.get().upper() == 'XXI_TEST':
+            messagebox.showinfo('Info', 'Бэкап объектов: ' + path_backup)
         if i_combobox_var.get() == i_comb_var_inst:
             s = sp.Popen( path_build + r'''\\RunMe.bat ''' + i_combobox_base.get() , cwd = path_build, creationflags=sp.CREATE_NEW_CONSOLE)
             s.communicate ()

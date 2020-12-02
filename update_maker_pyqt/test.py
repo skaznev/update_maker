@@ -1,5 +1,12 @@
 import os
-for root, dirs, files in os.walk(r"C:\temp\TEST"):
-    for file in files:
-        if file.lower() == ("новый текстовый документ.txt"):
-             print(os.path.join(root, file))
+for i in os.listdir(r'''X:\Инверсия\ФОНД\U\FUND_DB\TEST'''):
+    drs = os.path.join(r'''X:\Инверсия\ФОНД\U\FUND_DB\TEST''', i)
+    if not os.path.isfile(drs):
+        if ('RELEASE' in drs) or ('READY_TO_RELEASE' in drs):
+            continue
+        for ffiles in os.listdir(drs):
+            path_d = os.path.join(drs,ffiles)
+            if os.path.isfile(path_d):
+                if 'TR_TOOL_METADATA' in ffiles:
+                    print(path_d)
+        

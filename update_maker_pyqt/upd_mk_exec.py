@@ -4,6 +4,7 @@ import  shutil
 from    tkinter import messagebox 
 from    tkinter import *
 import  tkinter.ttk as ttk
+import  cx_Oracle as ora
 
 if_tr_tool_metadata = False # Переменная которая говрит, что в патче меняется TR_TOOL_METADATA.
 i_metadata          = ''    # Переменная в которую начитываем исполняемый кусок с метадатой.
@@ -64,7 +65,7 @@ prompt ==========                           начало fnd_ci.sql ==========
 prompt ==========                           конец fnd_ci.sql ==========
 
 prompt  состояние схемы после применения обновления:
-select OBJECT_TYPE, substr( OBJECT_NAME, 1, 35 ) OBJECT_NAME, STATUS from user_objects where not status = 'VALID';
+select OBJECT_TYPE, substr( OBJECT_NAME, 1, 35 ) OBJECT_NAME, STATUS from user_objects where not status = 'VALID'
 /
 
 '''
@@ -78,7 +79,7 @@ from Global_Name
 /
 
 prompt   Cостояние схемы до применения обновления:
-select OBJECT_TYPE, substr( OBJECT_NAME, 1, 35 ) OBJECT_NAME, STATUS from user_objects where not status = 'VALID';
+select OBJECT_TYPE, substr( OBJECT_NAME, 1, 35 ) OBJECT_NAME, STATUS from user_objects where not status = 'VALID'
 /
 '''
 i_end_sql           = r'''
@@ -166,14 +167,14 @@ i_form        = r'FORM'
 i_menu        = r'MENU'
 i_pll         = r'LIBRARY'
 i_comp_all    = ' compile_all=YES\n'
-
+files_crossing = ''
 
 # Конец объявления переменных----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
 
-def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE):
+def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE, PATH_STOCK, PATH_BACKUP):
     
     global if_tr_tool_metadata
     global if_cust            
@@ -207,14 +208,21 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE):
     global i_form             
     global i_menu             
     global i_pll              
-    global i_comp_all         
-
+    global i_comp_all       
+    global base  
+    global files_crossing
+    global path_backup
+    global path_stock
+    base = BASE
+    
     # Читаем пути:
 
     try:
-        path = os.path.abspath(PATH)
-        path_build = os.path.abspath(PATH_BUILD)
-        path_stock_scripts = os.path.abspath(PATH_STOCK_SCRIPTS)
+        path                = os.path.abspath(PATH)
+        path_build          = os.path.abspath(PATH_BUILD)
+        path_stock_scripts  = os.path.abspath(PATH_STOCK_SCRIPTS) 
+        path_backup         = os.path.abspath(PATH_BACKUP)
+        path_stock          = os.path.abspath(PATH_STOCK)
     except:
         messagebox.showinfo ('ERROR!!!', '''ОБНОВЛЕНИЕ ЗАПАКОВАНО С ОШИБКОЙ ОБРАБОТКИ КАТАЛОГОВ!!!!!!''')
 
@@ -225,6 +233,8 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE):
     try:
         shutil.rmtree(path_build, ignore_errors=True) # В винде куча всяких ошибок при работе с каталогами, лучше всего отрабатывает такая связка. Удаляем папку с игнором ошибок, а затем создаем.
         os.makedirs(path_build)
+        shutil.rmtree(path_backup, ignore_errors=True)
+        os.makedirs(path_backup)
     except:
         messagebox.showinfo ('ERROR!!!', '''ОБНОВЛЕНИЕ ЗАПАКОВАНО С ОШИБКОЙ ОБРАБОТКИ КАТАЛОГОВ!!!!!!''')
 
@@ -234,7 +244,9 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE):
     # Копируем файлы
     try:
         shutil.rmtree(path_build, ignore_errors=True) # Ну не хочет винда без лишней зачистки.
+        shutil.rmtree(path_backup, ignore_errors=True)
         shutil.copytree(path , path_build)
+        os.makedirs(path_backup)
     except:
         messagebox.showinfo ('ERROR!!!', '''ОБНОВЛЕНИЕ ЗАПАКОВАНО С ОШИБКОЙ ОБРАБОТКИ КАТАЛОГОВ!!!!!!''')
 
@@ -249,20 +261,91 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE):
 
     print ('Файлы считаны')
 
-    files_crossing = ''
+    def backup_obj (object =''):
+        print('БЭКАП')
+        global path_backup
+        print (path_backup)
+        global base
+        if (r'METADATA.SQL' == object.upper()) or (r'SCRIPT.SQL' in object.upper()) or (r'TABLE' in object.upper()):
+            return
+        elif (r'_B.SQL' in object.upper()):
+            type = 'PACKAGE_BODY'
+        elif r'V_T' in file.upper():
+            type = 'VIEW'
+        else:
+            type = 'PACKAGE_SPEC'
+    
+    #---------- РЕЖЕМ ИМЯ ОБЪЕКТА ЧТО Б СЧИТАТЬ ЕГО С БАЗЫ ----------    
+
+        obj = object.upper()
+        if type == 'PACKAGE_BODY':
+            obj = obj[:obj.find(r'_B.SQL') ]
+        else:
+            obj = obj[:obj.find(r'.SQL') ]
+
+    #---------- КОНЕЦ ОБРЕЗАНИЯ ИМЕНИ ----------
+
+
+    #---------- ОБРАЩАЕМСЯ К БАЗЕ ----------
+        if base.upper() == 'XXI_TEST':
+            print ('Бэкап объекта:', type, obj)
+            print ('base ', base, 'path_backup', path_backup)
+            conn = ora.connect('FUND_DB', 'FUND_DB', base)
+            try:
+                cur  = conn.cursor()
+                clob = cur.callfunc("dbms_metadata.get_ddl", ora.CLOB,(type, obj))
+                text = clob.read()
+                print('законнектились')                
+            finally:
+                cur.close()
+
+    #---------- КОНЕЦ ОБРАЩЕНИЯ К БАЗЕ ----------
+
+
+    #---------- СОХРАНЯЕМ ФАЙЛ----------
+        try:
+            print('пробуем сохранять')
+            i_file  = open(os.path.join(path_backup , object) ,  "w", encoding = "windows-1251")
+            i_file.write(text)
+            i_file.close()    
+            print('сохранились')
+        finally:
+            return
 
     def find_file(FILE):
+        print('ПОИСК ФАЙЛА')
         global files_crossing
         global path
-        global BASE
-    if BASE == 'XXI_TEST':
-        for root, dirs, files in os.walk(r'''X:\Инверсия\ФОНД\U\FUND_DB\TEST'''):
-            for file in files:
-                if chr(root).lower() == path.lower():
-                    continue
-                else file.lower() == FILE.lower():
-                    print(os.path.join(root, file))
-                    files_crossing += 'Пересечение: ' + chr(os.path.join(root, file)) + '\n'
+        global base
+        global path_stock
+        if base.upper() == 'XXI_TEST':
+            backup_obj(FILE)
+            for i in os.listdir(path_stock):
+                verion_folder = os.path.join(path_stock, i)
+                if (not os.path.isfile(verion_folder)) and not (('RELEASED' == i.upper()) or (i in path)):
+                    
+                    if 'READY_TO_RELEASE' == i.upper():
+                        path_stock_r = os.path.join(path_stock, i) 
+                        for i_r in os.listdir(path_stock_r):
+                            verion_folder_r = os.path.join(path_stock_r, i_r)    
+                            if not os.path.isfile(verion_folder_r):
+                                for file_of_version in os.listdir(verion_folder_r):
+                                    root_file_vers = os.path.join(verion_folder_r,file_of_version)
+                                    if os.path.isfile(root_file_vers):
+                                        if file_of_version.lower() == FILE.lower():
+                                            if not (os.path.getsize(root_file_vers) == os.path.getsize(os.path.join(path,FILE))):
+                                                files_crossing += '\nРАСХОЖДЕНИЕ!: ' + i_r + '\\' + file_of_version
+                                            else:
+                                                files_crossing += '\nПересечение      : ' + i_r + '\\' + file_of_version
+                    else:
+                        for file_of_version in os.listdir(verion_folder):
+                            root_file_vers = os.path.join(verion_folder,file_of_version)
+                            if os.path.isfile(root_file_vers):
+                                if file_of_version.lower() == FILE.lower():
+                                    if not (os.path.getsize(root_file_vers) == os.path.getsize(os.path.join(path,FILE))):
+                                        files_crossing += '\nРАСХОЖДЕНИЕ!: ' + i + '\\' + file_of_version
+                                    else:
+                                        files_crossing += '\nПересечение      : ' + i + '\\' + file_of_version
 
     # Формируем тело RunMe.sql -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # Делаем шапку
@@ -293,6 +376,8 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE):
                 i_runmeSQL = i_runmeSQL + i_start + file + i_palka + i_dog + file + i_n + '/' + i_end + file + i_palka
                 if "TR_TOOL_METADATA" in file.upper():
                     if_tr_tool_metadata = True
+                find_file(file.lower())                                  
+            
 
 
     print ('Runme для Фонда создан')
@@ -333,25 +418,38 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE):
 
     # Зальем себе в патч стоковые скрипты
     try:
-        shutil.copy( os.path.join(path_stock_scripts , 'fnd_ci.sql'), path_build)
-        shutil.copy( os.path.join(path_stock_scripts , 'fnd_2adm.sql') , path_build)
-        shutil.copy( os.path.join(path_stock_scripts , 'fnd_2usr.sql') , path_build)
-        shutil.copy( os.path.join(path_stock_scripts , 'tcs_prevention.sql') , path_build)
+        shutil.copy( os.path.join(path_stock_scripts , 'fnd_ci.sql')        , path_build)
+        shutil.copy( os.path.join(path_stock_scripts , 'fnd_2adm.sql')      , path_build)
+        shutil.copy( os.path.join(path_stock_scripts , 'fnd_2usr.sql')      , path_build)
+        shutil.copy( os.path.join(path_stock_scripts , 'tcs_prevention.sql'), path_build)
+        shutil.copy( os.path.join(path_stock_scripts , 'fnd_ci.sql')        , path_backup)
+        shutil.copy( os.path.join(path_stock_scripts , 'fnd_2adm.sql')      , path_backup)
+        shutil.copy( os.path.join(path_stock_scripts , 'fnd_2usr.sql')      , path_backup)
+        shutil.copy( os.path.join(path_stock_scripts , 'tcs_prevention.sql'), path_backup)        
     except:
         messagebox.showinfo ('ERROR!!!', '''ОБНОВЛЕНИЕ ЗАПАКОВАНО С ОШИБКОЙ КОПИРОВАНИЯ ФАЙЛОВ СТОКОВЫХ СКРИПТОВ!!!!!!''')
     print ('Создание файлов...')
 
     # Создаем файлы RunMe
     try:
-        runme_sql = open(os.path.join(path_build , 'RunMe.sql') , "w", encoding = "windows-1251")
-        runme_bat = open(os.path.join(path_build , 'RunMe.bat'), "w", encoding = "windows-1251")
-        runme_ci  = open(os.path.join(path_build , 'RunMe_ci.sql'), "w", encoding = "windows-1251")
+        runme_sql   = open(os.path.join(path_build    , 'RunMe.sql')      , "w", encoding = "windows-1251")
+        runme_bat   = open(os.path.join(path_build    , 'RunMe.bat')      , "w", encoding = "windows-1251")
+        runme_ci    = open(os.path.join(path_build    , 'RunMe_ci.sql')   , "w", encoding = "windows-1251")
+        runme_sql_b = open(os.path.join(path_backup   , 'RunMe.sql')      , "w", encoding = "windows-1251")
+        runme_bat_b = open(os.path.join(path_backup   , 'RunMe.bat')      , "w", encoding = "windows-1251")
+        runme_ci_b  = open(os.path.join(path_backup   , 'RunMe_ci.sql')   , "w", encoding = "windows-1251")        
         runme_sql.write(runmeSQL)
         runme_bat.write(runmeBAT)
         runme_ci.write(i_runmeSQL_ci)
+        runme_sql_b.write(runmeSQL)
+        runme_bat_b.write(runmeBAT)
+        runme_ci_b.write(i_runmeSQL_ci)
         runme_ci.close()
         runme_sql.close()
         runme_bat.close()
+        runme_ci_b.close()
+        runme_sql_b.close()
+        runme_bat_b.close()        
     except:
         messagebox.showinfo ('ERROR!!!', '''ОБНОВЛЕНИЕ ЗАПАКОВАНО С ОШИБКОЙ СОЗДАНИЯ ФАЙЛОВ RUNME!!!!!!''')
     #pb['value'] += 1

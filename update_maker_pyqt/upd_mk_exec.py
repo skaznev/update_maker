@@ -316,6 +316,7 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE, PATH_STOCK, PATH_BACKUP):
         print('ПОИСК ФАЙЛА')
         global files_crossing
         global path
+<<<<<<< HEAD
         global base
         global path_stock
         if base.upper() == 'XXI_TEST':
@@ -346,6 +347,17 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE, PATH_STOCK, PATH_BACKUP):
                                         files_crossing += '\nРАСХОЖДЕНИЕ!: ' + i + '\\' + file_of_version
                                     else:
                                         files_crossing += '\nПересечение      : ' + i + '\\' + file_of_version
+=======
+        global BASE
+    if BASE == 'XXI_TEST':
+        for root, dirs, files in os.walk(r'''X:\Инверсия\ФОНД\U\FUND_DB\TEST'''):
+            for file in files:
+                if chr(root).lower() == path.lower():
+                    continue
+                elif file.lower() == FILE.lower():
+                    print(os.path.join(root, file))
+                    files_crossing += 'Пересечение: ' + chr(os.path.join(root, file)) + '\n'
+>>>>>>> fe5f904449ce99a321d709a9ebedc830a646582d
 
     # Формируем тело RunMe.sql -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # Делаем шапку

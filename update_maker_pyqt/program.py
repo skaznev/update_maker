@@ -64,7 +64,8 @@ def upd_maker ():
             messagebox.showinfo('Info', 'Были пересечения с другими версиями на тесте (!!!): ' + crossing)
         if i_combobox_base.get().upper() == 'XXI_TEST':
             messagebox.showinfo('Info', 'Бэкап объектов: ' + path_backup)
-        if i_combobox_var.get() == i_comb_var_inst:
+        if (i_combobox_var.get() == i_comb_var_inst) and not ('РАСХОЖДЕНИЕ!' in crossing):
+            os.environ["PATH"] = os.environ["PATH"] + r'X:\orant\bin;' 
             s = sp.Popen( path_build + r'''\\RunMe.bat ''' + i_combobox_base.get() , cwd = path_build, creationflags=sp.CREATE_NEW_CONSOLE)
             s.communicate ()
         else:
@@ -72,7 +73,6 @@ def upd_maker ():
     except Exception as e:
         messagebox.showinfo('ERROR!!!', '''ОБНОВЛЕНИЕ НЕ ЗАПАКОВАНО!!!\nПроизошла ошибка в процедуре запаковки:\n''' + str(e) )
     finally:
-        os.environ["PATH"] = os.environ["PATH"] + r'X:\orant\bin;' 
         path_build = ''
 
 # Замутим кнопки:

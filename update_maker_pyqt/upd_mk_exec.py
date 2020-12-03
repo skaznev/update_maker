@@ -214,7 +214,14 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE, PATH_STOCK, PATH_BACKUP):
     global path_backup
     global path_stock
     base = BASE
-    
+    if_tr_tool_metadata = False # Переменная которая говрит, что в патче меняется TR_TOOL_METADATA.
+    i_metadata          = ''    # Переменная в которую начитываем исполняемый кусок с метадатой.
+    i_table             = ''    # Переменная в которую начитываем исполняемый кусок с изменением таблиц.
+    i_script            = ''    # Переменная в которую начитываем исполняемый кусок со скриптами.
+    i_forms_bat         = ''    # Переменная в которую начитываем исполняемый кусок с формами.
+    i_runmeSQL          = ''    # Переменная в которую начитываем исполняемый кусок с объектами FUND.
+    i_runmeSQL_ci       = ''    # Переменная с куском компиляции фондовых объектов
+    files_crossing      = ''    #
     # Читаем пути:
 
     try:

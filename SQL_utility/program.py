@@ -33,7 +33,7 @@ i_columns       = r'-- $columns = '
 
 try:
     with open('set.txt', 'r') as file:
-        os.environ["PATH"] = file.read()                                    # Выставляем переменную окружения, что б cx_oracle не ругался
+        os.environ["PATH"] = file.read() + os.environ["PATH"].replace(r'X:\orant\bin;', '')                                   # Выставляем переменную окружения, что б cx_oracle не ругался
 except:
     gg = os.environ["PATH"]
     os.environ["PATH"] = gg.replace(r'X:\orant\bin;', '')

@@ -30,13 +30,13 @@ i_combobox_base     = ttk.Combobox(i_window)
 i_combobox_var      = ttk.Combobox(i_window)
 i_comb_var_pak      = 'Запаковать'
 i_comb_var_inst     = 'Запаковать и установить'
+env_path            = os.environ["PATH"].replace(r'X:\orant\bin;', '')  
 
 try:
     with open('set.txt', 'r') as file:
-        os.environ["PATH"] = file.read()                                    # Выставляем переменную окружения, что б cx_oracle не ругался
+        os.environ["PATH"] = file.read()  + env_path                                  # Выставляем переменную окружения, что б cx_oracle не ругался
 except:
-    gg = os.environ["PATH"]
-    os.environ["PATH"] = gg.replace(r'X:\orant\bin;', '')
+    os.environ["PATH"] = env_path
     print('Не найден файл настроек set.txt. PATH: ' + os.environ["PATH"] )
 
 # установим заголовок для окна:
@@ -54,7 +54,8 @@ def open_dir (): # Объявляем функцию выбора директо
     i_path.insert(0 , path)
 
 def upd_maker ():
-    try: 
+    try:
+        os.environ["PATH"] = os.environ["PATH"].replace(r'X:\orant\bin;', '')
         global path_build_stock
         global path_backup
         path_build = path_build_stock
@@ -71,6 +72,7 @@ def upd_maker ():
     except Exception as e:
         messagebox.showinfo('ERROR!!!', '''ОБНОВЛЕНИЕ НЕ ЗАПАКОВАНО!!!\nПроизошла ошибка в процедуре запаковки:\n''' + str(e) )
     finally:
+        os.environ["PATH"] = os.environ["PATH"] + r'X:\orant\bin;' 
         path_build = ''
 
 # Замутим кнопки:

@@ -303,8 +303,11 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE, PATH_STOCK, PATH_BACKUP):
                 clob = cur.callfunc("dbms_metadata.get_ddl", ora.CLOB,(type, obj))
                 text = clob.read()
                 print('законнектились')                
-            finally:
                 cur.close()
+            except:
+                cur.close()
+                return
+                
 
     #---------- КОНЕЦ ОБРАЩЕНИЯ К БАЗЕ ----------
 
@@ -316,6 +319,8 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE, PATH_STOCK, PATH_BACKUP):
             i_file.write(text)
             i_file.close()    
             print('сохранились')
+        except:
+            return
         finally:
             return
 

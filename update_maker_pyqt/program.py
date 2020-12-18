@@ -62,7 +62,7 @@ def upd_maker ():
         crossing = um.exec(PATH = i_path.get(), PATH_BUILD = path_build, PATH_STOCK_SCRIPTS = path_stock_scripts , BASE = i_combobox_base.get(), PATH_STOCK = path_stock, PATH_BACKUP = path_backup)
         if not crossing == '':
             messagebox.showinfo('Info', 'Были пересечения с другими версиями на тесте (!!!): ' + crossing)
-        if i_combobox_base.get().upper() == 'XXI_TEST':
+        if i_combobox_base.get().upper() in ['XXI_TEST','XXI_PRE']:
             messagebox.showinfo('Info', 'Бэкап объектов: ' + path_backup)
         if (i_combobox_var.get() == i_comb_var_inst) and not ('РАСХОЖДЕНИЕ!' in crossing):
             os.environ["PATH"] = os.environ["PATH"] + r'X:\orant\bin;' 

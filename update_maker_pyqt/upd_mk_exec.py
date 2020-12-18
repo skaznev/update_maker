@@ -294,19 +294,19 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE, PATH_STOCK, PATH_BACKUP):
 
 
     #---------- ОБРАЩАЕМСЯ К БАЗЕ ----------
-        if base.upper() == 'XXI_TEST':
-            print ('Бэкап объекта:', type, obj)
-            print ('base ', base, 'path_backup', path_backup)
-            conn = ora.connect('FUND_DB', 'FUND_DB', base)
-            try:
-                cur  = conn.cursor()
-                clob = cur.callfunc("dbms_metadata.get_ddl", ora.CLOB,(type, obj))
-                text = clob.read()
-                print('законнектились')                
-                cur.close()
-            except:
-                cur.close()
-                return
+        
+        print ('Бэкап объекта:', type, obj)
+        print ('base ', base, 'path_backup', path_backup)
+        conn = ora.connect('FUND_DB', 'FUND_DB', base)
+        try:
+            cur  = conn.cursor()
+            clob = cur.callfunc("dbms_metadata.get_ddl", ora.CLOB,(type, obj))
+            text = clob.read()
+            print('законнектились')                
+            cur.close()
+        except:
+            cur.close()
+            return
                 
 
     #---------- КОНЕЦ ОБРАЩЕНИЯ К БАЗЕ ----------
@@ -330,34 +330,36 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE, PATH_STOCK, PATH_BACKUP):
         global path
         global base
         global path_stock
-        if base.upper() == 'XXI_TEST':
+        # А теперь немного ада, но лень было делать по уму, все равно скоро отомрет
+        if base.upper() in ['XXI_TEST','XXI_PRE']:  
             backup_obj(FILE)
-            for i in os.listdir(path_stock):
-                verion_folder = os.path.join(path_stock, i)
-                if (not os.path.isfile(verion_folder)) and not (('RELEASED' == i.upper()) or (i in path)):
-                    
-                    if 'READY_TO_RELEASE' == i.upper():
-                        path_stock_r = os.path.join(path_stock, i) 
-                        for i_r in os.listdir(path_stock_r):
-                            verion_folder_r = os.path.join(path_stock_r, i_r)    
-                            if not os.path.isfile(verion_folder_r):
-                                for file_of_version in os.listdir(verion_folder_r):
-                                    root_file_vers = os.path.join(verion_folder_r,file_of_version)
-                                    if os.path.isfile(root_file_vers):
-                                        if file_of_version.lower() == FILE.lower():
-                                            if not (os.path.getsize(root_file_vers) == os.path.getsize(os.path.join(path,FILE))):
-                                                files_crossing += '\nРАСХОЖДЕНИЕ!: ' + i_r + '\\' + file_of_version
-                                            else:
-                                                files_crossing += '\nПересечение      : ' + i_r + '\\' + file_of_version
-                    else:
-                        for file_of_version in os.listdir(verion_folder):
-                            root_file_vers = os.path.join(verion_folder,file_of_version)
-                            if os.path.isfile(root_file_vers):
-                                if file_of_version.lower() == FILE.lower():
-                                    if not (os.path.getsize(root_file_vers) == os.path.getsize(os.path.join(path,FILE))):
-                                        files_crossing += '\nРАСХОЖДЕНИЕ!: ' + i + '\\' + file_of_version
-                                    else:
-                                        files_crossing += '\nПересечение      : ' + i + '\\' + file_of_version
+            if base.upper() == 'XXI_TEST':
+                for i in os.listdir(path_stock):
+                    verion_folder = os.path.join(path_stock, i)
+                    if (not os.path.isfile(verion_folder)) and not (('RELEASED' == i.upper()) or (i in path)):
+                        
+                        if 'READY_TO_RELEASE' == i.upper():
+                            path_stock_r = os.path.join(path_stock, i) 
+                            for i_r in os.listdir(path_stock_r):
+                                verion_folder_r = os.path.join(path_stock_r, i_r)    
+                                if not os.path.isfile(verion_folder_r): 
+                                    for file_of_version in os.listdir(verion_folder_r):
+                                        root_file_vers = os.path.join(verion_folder_r,file_of_version)
+                                        if os.path.isfile(root_file_vers):
+                                            if file_of_version.lower() == FILE.lower():
+                                                if not (os.path.getsize(root_file_vers) == os.path.getsize(os.path.join(path,FILE))):
+                                                    files_crossing += '\nРАСХОЖДЕНИЕ!: ' + i_r + '\\' + file_of_version
+                                                else:
+                                                    files_crossing += '\nПересечение      : ' + i_r + '\\' + file_of_version
+                        else:
+                            for file_of_version in os.listdir(verion_folder):
+                                root_file_vers = os.path.join(verion_folder,file_of_version)
+                                if os.path.isfile(root_file_vers):
+                                    if file_of_version.lower() == FILE.lower():
+                                        if not (os.path.getsize(root_file_vers) == os.path.getsize(os.path.join(path,FILE))):
+                                            files_crossing += '\nРАСХОЖДЕНИЕ!: ' + i + '\\' + file_of_version
+                                        else:
+                                            files_crossing += '\nПересечение      : ' + i + '\\' + file_of_version
 
     # Формируем тело RunMe.sql -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # Делаем шапку
@@ -403,7 +405,7 @@ def exec (PATH, PATH_BUILD, PATH_STOCK_SCRIPTS, BASE, PATH_STOCK, PATH_BACKUP):
     runmeSQL = runmeSQL + i_metadata
 
     # Раз в обновлении менялась TR_TOOL_METADATA, тогда вставим блок с метадатой
-    if if_tr_tool_metadata is True:
+    if base.upper() == 'XXI_PRE' and if_tr_tool_metadata is True:
         runmeSQL = runmeSQL + i_start + 'METADATA' + i_palka + '''begin TR_TOOL_METADATA.EXECUTE_ALL; end;''' + i_n + '/' + i_end + 'METADATA' + i_palka + i_n + '/'
 
     # Прольем скрипты

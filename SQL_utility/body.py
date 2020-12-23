@@ -2,6 +2,7 @@
     #---------- ПОДКЛЮЧАЕМ БИБЛИОТЕКИ ----------
 
 import cx_Oracle as ora
+import psycopg2 as pg
 from multiprocessing import Process , Value , Lock
 import datetime
 import os
@@ -13,6 +14,11 @@ import os
 db              = ''        # база
 user            = ''        # пользователь
 ps              = ''        # пароль
+pg_db           = ''        # postgres база
+pg_user         = ''        # postgres пользователь
+pg_ps           = ''        # postgres пароль
+pg_host         = ''        # postgres хост
+pg_port         = ''        # postgres порт
 threads_cnt     = 5         # количетсво потоков
 date_to         = r''''''   # дата с которой селектим
 date_from       = r''''''   # дата по которую селектим
@@ -26,6 +32,10 @@ lenght_file     = 0
 cut             = 1000000    # Кол-во строк для обрезки файла
 i_plsql_start   = r'-- PL/SQL START'
 i_plsql_end     = r'-- PL/SQL END'
+i_pgsql_start   = r'-- PGSQL START'
+i_pgsql_end     = r'-- PGSQL END'
+oracle          = 'oracle'
+postgres        = 'postgres'
 
 # Определим заодно крутой многопроцессинговый счетчик отфетчиных строк
 class Counter(object):
@@ -106,13 +116,17 @@ def execute_oracle (user, ps, db, sql, threads_cnt, mod):
 
     #---------- ФУНКЦИЯ ДОПИСЫВАНИЯ В ФАЙЛ ----------
 
-def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter, V, files, PYTHON_INQ):
+def create_file(user, ps, db, sql, size, threads_cnt, mod, path, delimiter, V, files, base_type = oracle, PYTHON_INQ = 0):
     print(datetime.datetime.now())
     txt = ''
     ins_size = 0
 
-    conn = ora.connect(user, ps, db)
-    cur = conn.cursor()
+    if base_type == oracle:
+        conn = ora.connect(user, ps, db)
+        cur = conn.cursor()
+    elif base_type == postgres:
+        conn = pg.connect(user = pg_user, password = pg_ps, database = pg_db, host = pg_host, port = pg_port,)
+        cur = conn.cursor()
 
     if PYTHON_INQ == 0:
         if threads_cnt == 1:
@@ -174,7 +188,7 @@ def start_script(user, ps, db, sql, threads_cnt):
     for thread in threads:
         thread.join()
 
-def start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, V, lock, PL_SQL, INQ_FLAG):
+def start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, V, lock, PL_SQL, INQ_FLAG, PG_SQL):
     python_inq = 0
     # Если перед селектом надо вызвать PL_SQL код, то давайте вызовем в 1 поток, а потом стартанем треды с селектами
     if not PL_SQL == '':
@@ -193,12 +207,24 @@ def start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, V, 
     threads = []
 
     for i in range(threads_cnt):
-        thread = Process(target=create_file, args=(user, ps, db, sql, buff_size, threads_cnt, i, path, delimiter, V, lock, python_inq))
+        thread = Process(target=create_file, args=(user, ps, db, sql, buff_size, threads_cnt, i, path, delimiter, V, lock, oracle, python_inq))
         threads.append(thread)
         thread.start()
 
     for thread in threads:
         thread.join()
+
+    if PG_SQL != '':
+        print('pgsql start')
+        threads = []
+
+        for i in range(threads_cnt):
+            thread = Process(target=create_file, args=(user, ps, db, PG_SQL, buff_size, threads_cnt, i, path, delimiter, V, lock, postgres))
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads:
+            thread.join()
 
     #---------- КОНЕЦ: ФУНКЦИЯ РАСКИДЫВАЮЩАЯ ЗАДАЧУ ПО ПОТОКАМ ----------
 
@@ -275,6 +301,7 @@ def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITE
     sql_name    = SQL_NAME
     logs        = ''
     pl_sql      = ''
+    pg_sql      = ''
 
     # Объявим счетчик строк
     v = Counter(0)
@@ -284,7 +311,7 @@ def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITE
         start_script(user, ps, db, sql, threads_cnt)
         logs = read_log(user, ps, db, code_run, sql_name)
 
-    elif WHAT == 'Выгрузить':
+    elif what == 'Выгрузить':
         with open(path, 'w') as File_prev:
             File_prev.write(columns +'\n')
         
@@ -300,12 +327,21 @@ def execute(USER, PASSWORD, DB, WHAT, PATH, SQL_NAME, SQL, THREADS_CNT, DELIMITE
                 if 'python_inq' in pl_sql:
                     inq_flag = True
                 break
+
+        # Часть читающая кусок с Postgres кодом
+        pgsql_flag = False
+        for string in sql.split('\n'):
+            if i_pgsql_start in string:
+                pgsql_flag = True
+            if pgsql_flag == True:
+                pg_sql += string + '\n'
+            if i_pgsql_end in string:
+                break
             
         print('pl_sql =', pl_sql, 'inq_flag =', inq_flag)
+        print('pg_sql =', pg_sql)
 
-
-        File = open(path, 'a')
-        start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, v, files, pl_sql, inq_flag)
+        start_select(user, ps, db, sql, buff_size, threads_cnt, path, delimiter, v, files, pl_sql, inq_flag, pg_sql)
         
         # кол-во строк в файле (отфетченные + 1 строка (заголовок))
         lenght_file = v.value()+1  

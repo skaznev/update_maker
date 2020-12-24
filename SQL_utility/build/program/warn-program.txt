@@ -44,3 +44,6 @@ missing module named multiprocessing.get_start_method - imported by multiprocess
 missing module named multiprocessing.Lock - imported by multiprocessing (top-level), body (top-level)
 missing module named multiprocessing.Value - imported by multiprocessing (top-level), body (top-level)
 missing module named multiprocessing.Process - imported by multiprocessing (top-level), body (top-level)
+missing module named _uuid - imported by uuid (optional)
+missing module named netbios - imported by uuid (delayed)
+missing module named win32wnet - imported by uuid (delayed)

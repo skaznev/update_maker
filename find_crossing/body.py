@@ -1,9 +1,9 @@
 import  os
 files_crossing  = ''
 path_stock      = r'''X:\Инверсия\ФОНД\U\FUND_DB\TEST'''
-def exec(PATH, LIST_OBJECTS):
+def execute(LIST_OBJECTS):
     global files_crossing
-    
+    files_crossing = ''
     def find_file(FILE):
         print('ПОИСК ФАЙЛА')
         global files_crossing

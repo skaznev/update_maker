@@ -55,9 +55,7 @@ class application(QtWidgets.QMainWindow, Ui_design.Ui_MainWindow):
         else:
             try:
                 # Погнали 
-                result = body.execute(PATH         = self.line_path.text(),
-                                      LIST_OBJECTS = self.text_param_addit.toPlainText().split('\n')
-                                     )
+                result = body.execute(LIST_OBJECTS = self.text_param_addit.toPlainText().split('\n'))
                 if result == '':
                     QtWidgets.QMessageBox.information(self,'Информация', '''Пересечений нет!''')                                        
                 else:
